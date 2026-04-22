@@ -1,1017 +1,1369 @@
 <!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NFL Fantasy Analyzer v12</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans,Arial);color:var(--color-text-primary,#111);background:transparent;font-size:14px}
-.app{display:grid;grid-template-columns:210px 1fr;min-height:640px}
-.sidebar{border-right:0.5px solid #ddd;padding:1rem;display:flex;flex-direction:column;gap:2px}
-.main{padding:1.25rem;overflow:auto}
-.nav-btn{width:100%;text-align:left;padding:7px 10px;border:none;background:transparent;border-radius:8px;cursor:pointer;font-size:13px;color:#666}
-.nav-btn.active{background:#f2f2f2;color:#111;font-weight:500}
-.nav-btn:hover:not(.active){background:#f2f2f2}
-.sec-label{font-size:10px;font-weight:500;color:#aaa;letter-spacing:.06em;text-transform:uppercase;padding:10px 10px 4px}
+:root{
+  --bg:#F7F6F3;
+  --surface:#FFFFFF;
+  --surface2:#F2F1EE;
+  --border:#E4E2DC;
+  --border2:#D0CEC6;
+  --text:#1A1916;
+  --text2:#6B6860;
+  --text3:#9E9C97;
+  --accent:#1B6B3A;
+  --accent2:#E8F4EE;
+  --accent3:#0F4D2A;
+  --warn:#B45309;
+  --warn2:#FEF3C7;
+  --danger:#9B1C1C;
+  --danger2:#FEE2E2;
+  --info:#1E40AF;
+  --info2:#EFF6FF;
+  --r1:#6D4C41;
+  --r2:#2E7D32;
+  --r3:#1565C0;
+  --r4:#6A1B9A;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow2:0 4px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+  --radius:10px;
+  --radius2:14px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+
+/* Sidebar */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:1px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{font-size:13px;font-weight:600;padding:4px 10px 16px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.logo-badge{background:var(--text);color:#fff;font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;letter-spacing:.04em;font-family:'DM Mono',monospace}
+.nav-section{font-size:9px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:12px 10px 4px}
+.nav-btn{width:100%;text-align:left;padding:7px 10px;border:none;background:transparent;border-radius:8px;cursor:pointer;font-size:12.5px;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;gap:8px}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:var(--text);color:#fff;font-weight:500}
+.nav-btn .nav-icon{font-size:14px;opacity:.7}
+.sidebar-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);padding-left:10px;line-height:1.8;font-family:'DM Mono',monospace}
+
+/* Main */
+.main{padding:28px 32px;overflow-x:hidden}
+.page-header{margin-bottom:24px}
+.page-title{font-size:22px;font-weight:600;letter-spacing:-.02em;margin-bottom:3px}
+.page-sub{font-size:12px;color:var(--text2)}
 .tab{display:none}.tab.active{display:block}
-.page-title{font-size:17px;font-weight:500;margin-bottom:3px}
-.page-sub{font-size:12px;color:#666;margin-bottom:1.1rem}
-.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.1rem}
-.metric{background:#f7f7f7;border-radius:8px;padding:10px 12px}
-.metric-label{font-size:11px;color:#888;margin-bottom:3px}
-.metric-val{font-size:20px;font-weight:500}
-.gold{color:#B8762A}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card-title{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:14px;letter-spacing:-.01em}
+
+/* Metrics row */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.metric-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.metric-val{font-size:24px;font-weight:600;letter-spacing:-.02em;font-family:'DM Mono',monospace}
+.metric-val.gold{color:var(--warn)}
+.metric-val.green{color:var(--accent)}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.toolbar-label{font-size:11px;font-weight:500;color:var(--text3);white-space:nowrap}
+.seg{display:flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;flex-shrink:0}
+.seg-btn{padding:5px 13px;font-size:11.5px;border:none;background:transparent;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;font-weight:500}
+.seg-btn:not(:last-child){border-right:1px solid var(--border2)}
+.seg-btn.active{background:var(--text);color:#fff}
+.seg-btn.active.green{background:var(--accent);color:#fff}
+.toggle-row{display:flex;align-items:center;gap:7px;margin-left:auto}
+.toggle-sw{position:relative;width:32px;height:18px;flex-shrink:0}
+.toggle-sw input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:20px;cursor:pointer;transition:.2s}
+.toggle-track:before{content:'';position:absolute;width:12px;height:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+input:checked+.toggle-track{background:var(--accent)}
+input:checked+.toggle-track:before{transform:translateX(14px)}
+.toggle-label{font-size:11.5px;color:var(--text2);white-space:nowrap}
+.divider{width:1px;height:18px;background:var(--border);flex-shrink:0}
+
+/* Position tabs */
+.pos-tabs{display:flex;gap:6px;margin-bottom:14px}
+.pos-tab{padding:4px 14px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:11.5px;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:500}
+.pos-tab.active{background:var(--text);color:#fff;border-color:transparent}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;padding:6px 8px;border-bottom:0.5px solid #e0e0e0;font-weight:500;font-size:11px;color:#888;white-space:nowrap}
-td{padding:6px 8px;border-bottom:0.5px solid #efefef;vertical-align:middle}
-tr:hover td{background:#fafafa}
-.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
-.badge-QB{background:#E6EEFF;color:#1A3A8F}.badge-RB{background:#E3F5EA;color:#1A6634}
-.badge-WR{background:#FFF3E0;color:#8B4500}.badge-TE{background:#F3E5FF;color:#5B0085}
-.tier-elite{background:#D4EDDA;color:#155724}.tier-strong{background:#D1ECF1;color:#0C5460}
-.tier-upside{background:#FFF3CD;color:#856404}.tier-dev{background:#F8D7DA;color:#721C24}
-.inj-badge{display:inline-block;padding:2px 6px;border-radius:20px;font-size:10px;background:#FFF3CD;color:#856404;margin-left:4px}
-.comp-dots{display:inline-flex;gap:2px;margin-left:3px;vertical-align:middle}
-.dot{width:6px;height:6px;border-radius:50%;display:inline-block}
-.card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:.9rem 1.1rem;margin-bottom:.9rem}
-.card-title{font-size:13px;font-weight:500;margin-bottom:.65rem}
-.pos-tabs{display:flex;gap:5px;margin-bottom:.9rem}
-.pos-tab{padding:4px 12px;border:0.5px solid #ddd;border-radius:20px;cursor:pointer;font-size:12px;background:transparent;color:#666}
-.pos-tab.active{background:#111;color:#fff;border-color:transparent}
-.filter-row{display:flex;gap:8px;margin-bottom:.9rem;flex-wrap:wrap;align-items:center}
-.filter-row input,.filter-row select{height:30px;font-size:12px;padding:0 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#111}
-.filter-row input{width:160px}
-.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.ccard{border:0.5px solid #e0e0e0;border-radius:12px;padding:.9rem;background:#fff}
-.cname{font-size:14px;font-weight:500;margin-bottom:2px}
-.cpos{font-size:11px;color:#666;margin-bottom:.65rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.cstat{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid #efefef;font-size:12px}
-.cstat:last-child{border:none}
-.cstat-label{color:#888}
-.win{color:#1A6634;font-weight:500}
-.chart-wrap{position:relative;width:100%;height:190px;margin-top:.4rem}
-.prospect-sel{height:30px;font-size:12px;padding:0 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#111;width:100%;margin-bottom:.4rem}
-.btn{padding:5px 12px;border:0.5px solid #ccc;border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:#111}
-.btn:hover{background:#f2f2f2}
-.dials-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1rem}
-.dial-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:1rem 1.1rem}
-.dial-title{font-size:13px;font-weight:500;margin-bottom:3px}
-.dial-desc{font-size:11px;color:#888;margin-bottom:.85rem;line-height:1.5}
-.dial-row{display:flex;align-items:center;gap:12px}
-.dial-row input[type=range]{flex:1}
-.dial-val{font-size:22px;font-weight:500;width:28px;text-align:center}
-.dial-labels{display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-top:4px}
-.dial-bar{height:4px;border-radius:2px;margin-top:6px;background:#f0f0f0;overflow:hidden}
-.dial-fill{height:100%;border-radius:2px;transition:width .2s,background .2s}
-.model-note{font-size:11px;color:#888;background:#f7f7f7;border-radius:8px;padding:8px 12px;margin-bottom:1rem;line-height:1.6}
-.pref-bar{font-size:11px;color:#666;background:#f7f7f7;padding:7px 10px;border-radius:8px;margin-bottom:.75rem}
-.format-toggle{display:flex;align-items:center;gap:0;border:0.5px solid #ccc;border-radius:8px;overflow:hidden;width:fit-content}
-.format-btn{padding:6px 16px;font-size:12px;border:none;background:#fff;cursor:pointer;color:#666;transition:background .15s;white-space:nowrap}
-.format-btn:not(:last-child){border-right:0.5px solid #ccc}
-.format-btn.active{background:#1A3A8F;color:#fff;font-weight:500}
-.sticky-format{position:sticky;top:0;background:rgba(255,255,255,.96);padding:8px 0 10px;margin-bottom:.5rem;z-index:10;border-bottom:0.5px solid #eee;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.sticky-format .format-label{margin:0;font-size:12px;font-weight:500;color:#444}
-.performer-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.9rem;margin-bottom:.9rem}
-.pos-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;overflow:hidden}
-.pos-card-header{padding:8px 12px;font-size:12px;font-weight:500;color:#fff;display:flex;justify-content:space-between;align-items:center}
-.pos-card table{font-size:11px}
-.pos-card th{font-size:10px;padding:5px 8px}
-.pos-card td{padding:5px 8px}
-.rank-num{color:#aaa;font-size:11px}
-.toggle-row{display:flex;align-items:center;gap:8px}
-.toggle-switch{position:relative;width:36px;height:20px;flex-shrink:0}
-.toggle-switch input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;inset:0;background:#ccc;border-radius:20px;cursor:pointer;transition:.2s}
-.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
-input:checked+.toggle-slider{background:#1A6634}
-input:checked+.toggle-slider:before{transform:translateX(16px)}
-.toggle-label{font-size:12px;color:#444}
-.model-badge{font-size:10px;background:#E6EEFF;color:#1A3A8F;padding:2px 7px;border-radius:20px;margin-left:6px}
-.dash-toggle{display:flex;gap:0;border:0.5px solid #ccc;border-radius:8px;overflow:hidden;width:fit-content;margin-bottom:.9rem}
-.dash-tab-btn{padding:6px 18px;font-size:12px;border:none;background:#fff;cursor:pointer;color:#666;transition:background .15s}
-.dash-tab-btn:not(:last-child){border-right:0.5px solid #ccc}
-.dash-tab-btn.active{background:#111;color:#fff;font-weight:500}
-.dash-section{display:none}.dash-section.active{display:block}
-.comp-btn{padding:3px 9px;font-size:11px;border:0.5px solid #1A3A8F;border-radius:20px;background:transparent;color:#1A3A8F;cursor:pointer;white-space:nowrap}
-.comp-btn:hover{background:#E6EEFF}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+thead{background:var(--surface2)}
+th{text-align:left;padding:9px 12px;font-weight:600;font-size:10.5px;color:var(--text3);white-space:nowrap;letter-spacing:.02em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.num{font-family:'DM Mono',monospace;font-size:12px}
+.rank-num{color:var(--text3);font-size:11px;font-family:'DM Mono',monospace}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.badge-QB{background:#FFF3E0;color:#8B4500}
+.badge-RB{background:#E8F4EE;color:#1B6B3A}
+.badge-WR{background:#E8F0FE;color:#1E40AF}
+.badge-TE{background:#F3E8FF;color:#6D28D9}
+.tier-Elite{background:#D1FAE5;color:#065F46}
+.tier-Starter{background:#DBEAFE;color:#1E40AF}
+.tier-Flex{background:#EDE9FE;color:#5B21B6}
+.tier-Viable{background:#FEF3C7;color:#92400E}
+.tier-Developmental{background:#F3F4F6;color:#374151}
+.tier-Bust{background:#FEE2E2;color:#991B1B}
+.conf-low{background:#FEE2E2;color:#991B1B;font-size:9px;padding:1px 5px}
+
+/* VORP */
+.vorp-pos{color:var(--accent);font-weight:600;font-family:'DM Mono',monospace}
+.vorp-neg{color:var(--danger);font-family:'DM Mono',monospace}
+.vorp-neu{color:var(--text3);font-family:'DM Mono',monospace}
+
+/* Comp button */
+.comp-btn{padding:3px 10px;font-size:10.5px;border:1px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.comp-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--text)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,15,10,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:14px;padding:1.5rem;width:min(680px,95vw);max-height:85vh;overflow-y:auto;position:relative}
-.modal-title{font-size:15px;font-weight:500;margin-bottom:4px}
-.modal-sub{font-size:12px;color:#888;margin-bottom:1rem}
-.modal-close{position:absolute;top:1rem;right:1rem;border:none;background:transparent;font-size:18px;cursor:pointer;color:#888;line-height:1}
-.comp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:1rem}
-.comp-card{border:0.5px solid #e0e0e0;border-radius:10px;padding:.75rem;background:#f9f9f9}
-.comp-card-name{font-size:12px;font-weight:500;margin-bottom:2px}
-.comp-card-meta{font-size:11px;color:#888;margin-bottom:.5rem}
-.comp-card-stat{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:0.5px solid #eee}
-.comp-card-stat:last-child{border:none}
-.comp-card-actual{font-size:13px;font-weight:500;color:#1A6634;margin-top:.4rem}
-.prospect-hero{background:linear-gradient(135deg,#1A2744,#243560);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;color:#fff}
-.prospect-hero-name{font-size:16px;font-weight:500;margin-bottom:2px}
-.prospect-hero-meta{font-size:12px;opacity:.7;margin-bottom:.75rem}
-.prospect-hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
-.phstat{background:rgba(255,255,255,.1);border-radius:8px;padding:6px 8px}
-.phstat-label{font-size:10px;opacity:.7;margin-bottom:2px}
-.phstat-val{font-size:14px;font-weight:500}
+.modal{background:var(--surface);border-radius:var(--radius2);padding:24px;width:min(740px,95vw);max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.15),0 4px 16px rgba(0,0,0,.08)}
+.modal-close{position:absolute;top:16px;right:16px;border:none;background:var(--surface2);width:28px;height:28px;border-radius:50%;cursor:pointer;color:var(--text2);font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-close:hover{background:var(--border2);color:var(--text)}
+
+/* Prospect hero in modal */
+.prospect-hero{background:linear-gradient(135deg,#1A2744 0%,#1B6B3A 100%);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;color:#fff}
+.hero-name{font-size:17px;font-weight:600;letter-spacing:-.02em;margin-bottom:2px}
+.hero-meta{font-size:11px;opacity:.65;margin-bottom:12px}
+.hero-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.hs{background:rgba(255,255,255,.1);border-radius:7px;padding:7px 9px}
+.hs-label{font-size:9px;opacity:.65;margin-bottom:2px;letter-spacing:.04em;text-transform:uppercase}
+.hs-val{font-size:14px;font-weight:600;font-family:'DM Mono',monospace}
+
+/* Outcome cards */
+.outcome-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 0}
+.oc{border-radius:var(--radius);padding:14px}
+.oc.up{background:#D1FAE5;border:1px solid #A7F3D0}
+.oc.mid{background:#DBEAFE;border:1px solid #BFDBFE}
+.oc.dn{background:#FEF3C7;border:1px solid #FDE68A}
+.oc-label{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.oc.up .oc-label{color:#065F46}
+.oc.mid .oc-label{color:#1E40AF}
+.oc.dn .oc-label{color:#92400E}
+.oc-name{font-size:13px;font-weight:600;margin-bottom:1px}
+.oc-meta{font-size:10px;color:var(--text2);margin-bottom:8px}
+.oc-score{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;margin-bottom:6px}
+.oc.up .oc-score{color:#065F46}
+.oc.mid .oc-score{color:#1E40AF}
+.oc.dn .oc-score{color:#92400E}
+.oc-row{display:flex;justify-content:space-between;font-size:10.5px;padding:2px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+.oc-row:last-child{border:none}
+
+/* SHAP bar */
+.shap-section{margin-top:14px}
+.shap-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;letter-spacing:.02em}
+.shap-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.shap-label{font-size:10.5px;color:var(--text2);width:140px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shap-bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.shap-bar{height:100%;border-radius:3px;transition:width .3s}
+.shap-bar.pos{background:var(--accent)}
+.shap-bar.neg{background:var(--danger);margin-left:auto}
+.shap-val{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);width:36px;text-align:right;flex-shrink:0}
+.shap-note{font-size:10px;color:var(--text3);margin-top:6px;padding:6px 8px;background:var(--surface2);border-radius:6px}
+
+/* Compare */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ccard{border:1px solid var(--border);border-radius:var(--radius);padding:14px;background:var(--surface)}
+.ccard-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.ccard-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.cstat{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.cstat:last-child{border:none}
+.cstat-label{color:var(--text2)}
+.cstat-win{color:var(--accent);font-weight:600}
+
+/* Dials */
+.dials-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.dial-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.dial-title{font-size:12.5px;font-weight:600;margin-bottom:3px}
+.dial-desc{font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+.dial-row{display:flex;align-items:center;gap:10px}
+.dial-row input[type=range]{flex:1;accent-color:var(--accent)}
+.dial-val{font-size:20px;font-weight:700;width:24px;text-align:center;font-family:'DM Mono',monospace}
+.dial-bar{height:3px;border-radius:2px;margin-top:5px;background:var(--surface2);overflow:hidden}
+.dial-fill{height:100%;border-radius:2px;transition:width .2s,background .2s}
+.dial-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:.02em}
+.model-note{font-size:11px;color:var(--text2);background:var(--surface2);border-radius:8px;padding:9px 12px;margin-bottom:14px;line-height:1.6;border-left:3px solid var(--border2)}
+
+/* Weights */
+.weight-bar-wrap{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:3px}
+.weight-bar{height:100%;border-radius:3px}
+.weight-row{margin-bottom:10px}
+.weight-meta{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:2px}
+
+/* Search */
+.search-input{height:34px;font-size:12.5px;padding:0 12px;border:1px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .15s}
+.search-input:focus{border-color:var(--accent)}
+.filter-select{height:34px;font-size:12px;padding:0 10px;border:1px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+
+/* Pref bar */
+.pref-bar{font-size:11px;color:var(--text2);background:var(--surface2);padding:8px 12px;border-radius:8px;margin-bottom:12px;line-height:1.7;border:1px solid var(--border)}
+
+/* Performers grid */
+.performers-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.pos-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.pos-card-header{padding:8px 14px;font-size:11px;font-weight:700;color:#fff;display:flex;justify-content:space-between;align-items:center;letter-spacing:.02em}
+.pos-card table{font-size:11px}
+.pos-card th{font-size:9.5px;padding:5px 10px}
+.pos-card td{padding:5px 10px}
+
+/* Data dots */
+.dots{display:inline-flex;gap:2px;margin-left:3px}
+.dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+
+/* Lens info box */
+.lens-info{font-size:11px;color:var(--text2);padding:6px 10px;background:var(--info2);border-radius:7px;border-left:3px solid var(--info);margin-bottom:12px}
+
+/* Inj badge */
+.inj{display:inline-block;padding:1px 6px;border-radius:20px;font-size:9.5px;background:var(--warn2);color:var(--warn);margin-left:3px;font-weight:600}
+
+/* Charts */
+.chart-wrap{position:relative;width:100%;height:160px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* Responsive */
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .hero-stats{grid-template-columns:repeat(3,1fr)}
+  .outcome-grid{grid-template-columns:1fr}
+}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.tab.active{animation:fadeIn .2s ease}
 </style>
 
-<div class="app">
-<div class="sidebar">
-  <div style="font-size:14px;font-weight:500;padding:4px 4px 10px">NFL Fantasy Analyzer<span class="model-badge">Real Data</span></div>
-  <div class="sec-label">Analysis</div>
-  <button class="nav-btn active" onclick="showTab('dashboard',this)">Dashboard</button>
-  <button class="nav-btn" onclick="showTab('prospects',this)">2026 Prospects</button>
-  <button class="nav-btn" onclick="showTab('compare',this)">Compare Players</button>
-  <div class="sec-label">Model</div>
-  <button class="nav-btn" onclick="showTab('weights',this)">My Preferences</button>
-  <button class="nav-btn" onclick="showTab('modelweights',this)">Model Weights</button>
-  <div class="sec-label">Search</div>
-  <button class="nav-btn" onclick="showTab('search',this)">Player Search</button>
-  <div style="margin-top:auto;padding-top:1rem;border-top:0.5px solid #eee">
-    <div style="font-size:10px;color:#888;line-height:1.6">Real data · 2015-2025<br>877 players · Ridge regression</div>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-logo">NFL Draft Analyzer <span class="logo-badge">v12</span></div>
+  <div class="nav-section">Analysis</div>
+  <button class="nav-btn active" onclick="showTab('dashboard',this)"><span class="nav-icon">◈</span>Dashboard</button>
+  <button class="nav-btn" onclick="showTab('prospects',this)"><span class="nav-icon">◎</span>2026 Prospects</button>
+  <button class="nav-btn" onclick="showTab('compare',this)"><span class="nav-icon">⇄</span>Compare</button>
+  <button class="nav-btn" onclick="showTab('search',this)"><span class="nav-icon">⌕</span>Player Search</button>
+  <div class="nav-section">Model</div>
+  <button class="nav-btn" onclick="showTab('prefs',this)"><span class="nav-icon">◐</span>Preferences</button>
+  <button class="nav-btn" onclick="showTab('weights',this)"><span class="nav-icon">≡</span>Model Weights</button>
+  <div class="sidebar-footer">
+    XGBoost · 1,271 players<br>
+    2010–2025 draft classes<br>
+    4 lenses · VORP tiers
   </div>
-</div>
+</nav>
 
-<div class="main">
+<main class="main">
 
 <!-- DASHBOARD -->
 <div id="tab-dashboard" class="tab active">
-  <div class="page-title">2026 Draft Class</div>
-  <div class="page-sub">Real model predictions · 877 historical players · Ridge regression</div>
-  <div class="sticky-format">
-    <span class="format-label">Scoring:</span>
-    <div class="format-toggle">
-      <button class="format-btn" onclick="setFormat('std',this)">Standard</button>
-      <button class="format-btn active" onclick="setFormat('half',this)">Half PPR</button>
-      <button class="format-btn" onclick="setFormat('ppr',this)">PPR</button>
+  <div class="page-header">
+    <div class="page-title">2026 Draft Class</div>
+    <div class="page-sub">XGBoost model · 1,271 historical players · Four prediction lenses · VORP-based tiers</div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Historical Players</div><div class="metric-val num">1,271</div></div>
+    <div class="metric"><div class="metric-label">2026 Prospects</div><div class="metric-val num green">41</div></div>
+    <div class="metric"><div class="metric-label">Best R² (TE peak)</div><div class="metric-val num">0.455</div></div>
+    <div class="metric"><div class="metric-label">Active Lens</div><div class="metric-val gold" id="dash-lens-display">Peak</div></div>
+  </div>
+
+  <div class="toolbar">
+    <span class="toolbar-label">Lens:</span>
+    <div class="seg" id="dash-lens-seg">
+      <button class="seg-btn" onclick="setLens('yr1',this,'dash')">Yr 1</button>
+      <button class="seg-btn" onclick="setLens('early',this,'dash')">Early</button>
+      <button class="seg-btn active green" onclick="setLens('peak',this,'dash')">Peak</button>
+      <button class="seg-btn" onclick="setLens('career',this,'dash')">Career</button>
+    </div>
+    <div class="divider"></div>
+    <span class="toolbar-label">Model:</span>
+    <div class="seg" id="dash-mode-seg">
+      <button class="seg-btn active" onclick="setMode('combined',this,'dash')">Talent + Capital</button>
+      <button class="seg-btn" onclick="setMode('pure',this,'dash')">Pure Talent</button>
     </div>
     <div class="toggle-row">
-      <label class="toggle-switch"><input type="checkbox" id="injury-toggle" onchange="renderAll()"><span class="toggle-slider"></span></label>
-      <span class="toggle-label">Adjust for injury</span>
+      <label class="toggle-sw"><input type="checkbox" id="inj-tog" onchange="renderAll()"><span class="toggle-track"></span></label>
+      <span class="toggle-label">Injury adj.</span>
     </div>
   </div>
-  <div class="metric-row">
-    <div class="metric"><div class="metric-label">Historical players</div><div class="metric-val">877</div></div>
-    <div class="metric"><div class="metric-label">2026 prospects</div><div class="metric-val">41</div></div>
-    <div class="metric"><div class="metric-label">Model R2 (RB)</div><div class="metric-val">0.234</div></div>
-    <div class="metric"><div class="metric-label">Scoring format</div><div class="metric-val gold" id="format-display">Half PPR</div></div>
+
+  <!-- Lens explanation -->
+  <div class="lens-info" id="dash-lens-info">Peak Window: Best 3-of-5 season average — the ceiling a player reaches at their best.</div>
+
+  <!-- Dash toggle -->
+  <div class="seg" style="margin-bottom:14px;width:fit-content">
+    <button class="seg-btn active" onclick="showDashSec('prospects',this)">2026 Prospects</button>
+    <button class="seg-btn" onclick="showDashSec('historical',this)">Historical Leaders</button>
   </div>
 
-  <!-- View toggle -->
-  <div class="dash-toggle">
-    <button class="dash-tab-btn active" onclick="showDashSection('prospects',this)">2026 Prospects</button>
-    <button class="dash-tab-btn" onclick="showDashSection('historical',this)">Historical Top Performers</button>
-  </div>
-
-  <!-- PROSPECTS VIEW -->
-  <div id="dash-prospects" class="dash-section active">
+  <div id="dash-sec-prospects">
     <div class="pos-tabs" id="dash-pos-tabs">
-      <button class="pos-tab active" onclick="filterDashProspects('ALL',this)">All</button>
-      <button class="pos-tab" onclick="filterDashProspects('QB',this)">QB</button>
-      <button class="pos-tab" onclick="filterDashProspects('RB',this)">RB</button>
-      <button class="pos-tab" onclick="filterDashProspects('WR',this)">WR</button>
-      <button class="pos-tab" onclick="filterDashProspects('TE',this)">TE</button>
+      <button class="pos-tab active" onclick="filterDash('ALL',this)">All</button>
+      <button class="pos-tab" onclick="filterDash('QB',this)">QB</button>
+      <button class="pos-tab" onclick="filterDash('RB',this)">RB</button>
+      <button class="pos-tab" onclick="filterDash('WR',this)">WR</button>
+      <button class="pos-tab" onclick="filterDash('TE',this)">TE</button>
     </div>
-    <table>
-      <thead><tr><th>Rank</th><th>Player</th><th>School</th><th>Pos</th><th>Pick</th><th>Age</th><th>Breakout</th><th id="dash-score-col">Predicted</th><th>Tier</th><th>Comp</th></tr></thead>
-      <tbody id="dash-prospect-body"></tbody>
-    </table>
-    <div style="margin-top:.6rem;font-size:11px;color:#aaa">Click "Comp" to see the most similar historical players at that position.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:32px">#</th>
+          <th>Player</th>
+          <th>School</th>
+          <th>Pos</th>
+          <th>Pick</th>
+          <th>Age</th>
+          <th>Breakout</th>
+          <th id="dash-score-hdr">Score</th>
+          <th>VORP</th>
+          <th>Tier</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="dash-tbody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-size:10.5px;color:var(--text3)">VORP = value over 40th-percentile replacement · Click Comp for historical outcome scenarios</div>
   </div>
 
-  <!-- HISTORICAL VIEW -->
-  <div id="dash-historical" class="dash-section">
-    <div style="font-size:13px;font-weight:500;margin-bottom:.65rem">Top performers by position</div>
-    <div class="performer-grid">
-      <div class="pos-card"><div class="pos-card-header" style="background:#1A3A8F">QB - Top performers <span id="qb-avg"></span></div>
-        <table><thead><tr><th>#</th><th>Player</th><th>Class</th><th>Pick</th><th>PPR/Ssn</th><th>Inj</th><th>Data</th></tr></thead>
-        <tbody id="top-QB-body"></tbody></table></div>
-      <div class="pos-card"><div class="pos-card-header" style="background:#1A6634">RB - Top performers <span id="rb-avg"></span></div>
-        <table><thead><tr><th>#</th><th>Player</th><th>Class</th><th>Pick</th><th>PPR/Ssn</th><th>Inj</th><th>Data</th></tr></thead>
-        <tbody id="top-RB-body"></tbody></table></div>
-      <div class="pos-card"><div class="pos-card-header" style="background:#8B4500">WR - Top performers <span id="wr-avg"></span></div>
-        <table><thead><tr><th>#</th><th>Player</th><th>Class</th><th>Pick</th><th>PPR/Ssn</th><th>Inj</th><th>Data</th></tr></thead>
-        <tbody id="top-WR-body"></tbody></table></div>
-      <div class="pos-card"><div class="pos-card-header" style="background:#5B0085">TE - Top performers <span id="te-avg"></span></div>
-        <table><thead><tr><th>#</th><th>Player</th><th>Class</th><th>Pick</th><th>PPR/Ssn</th><th>Inj</th><th>Data</th></tr></thead>
-        <tbody id="top-TE-body"></tbody></table></div>
+  <div id="dash-sec-historical" style="display:none">
+    <div class="performers-grid" id="performers-grid"></div>
+    <div class="card">
+      <div class="card-title">Avg fantasy pts/season by position</div>
+      <div class="chart-wrap"><canvas id="posChart"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title" id="pos-chart-title">Avg fantasy points/season by position (Half PPR)</div>
-      <div class="chart-wrap" style="height:140px"><canvas id="posChart"></canvas></div>
+      <div class="card-title">Starter hit rate by draft round (120+ pts/season)</div>
+      <div class="chart-wrap"><canvas id="roundChart"></canvas></div>
     </div>
-    <div class="card">
-      <div class="card-title">Hit rate by draft round (starter threshold: 120+ PPR/season)</div>
-      <div class="chart-wrap" style="height:140px"><canvas id="roundChart"></canvas></div>
-    </div>
-  </div>
-</div>
-
-<!-- COMP MODAL -->
-<div class="modal-overlay" id="comp-modal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeCompModal()">&#10005;</button>
-    <div id="comp-modal-content"></div>
   </div>
 </div>
 
 <!-- PROSPECTS -->
 <div id="tab-prospects" class="tab">
-  <div class="page-title">2026 Draft Prospects</div>
-  <div class="page-sub">Ranked by real model prediction · adjusted by preference settings</div>
-  <div class="sticky-format">
-    <span class="format-label">Scoring:</span>
-    <div class="format-toggle">
-      <button class="format-btn" onclick="setFormat('std',this)">Standard</button>
-      <button class="format-btn active" onclick="setFormat('half',this)">Half PPR</button>
-      <button class="format-btn" onclick="setFormat('ppr',this)">PPR</button>
+  <div class="page-header">
+    <div class="page-title">2026 Draft Prospects</div>
+    <div class="page-sub">Full ranking with preference adjustments</div>
+  </div>
+
+  <div class="toolbar">
+    <span class="toolbar-label">Lens:</span>
+    <div class="seg">
+      <button class="seg-btn" onclick="setLens('yr1',this,'pros')">Yr 1</button>
+      <button class="seg-btn" onclick="setLens('early',this,'pros')">Early</button>
+      <button class="seg-btn active green" onclick="setLens('peak',this,'pros')">Peak</button>
+      <button class="seg-btn" onclick="setLens('career',this,'pros')">Career</button>
+    </div>
+    <div class="divider"></div>
+    <span class="toolbar-label">Model:</span>
+    <div class="seg">
+      <button class="seg-btn active" onclick="setMode('combined',this,'pros')">Talent + Capital</button>
+      <button class="seg-btn" onclick="setMode('pure',this,'pros')">Pure Talent</button>
     </div>
   </div>
+
+  <div class="lens-info" id="pros-lens-info">Peak Window: Best 3-of-5 season average — the ceiling a player reaches at their best.</div>
+
   <div class="pos-tabs">
-    <button class="pos-tab active" onclick="filterProspects('ALL',this)">All</button>
-    <button class="pos-tab" onclick="filterProspects('QB',this)">QB</button>
-    <button class="pos-tab" onclick="filterProspects('RB',this)">RB</button>
-    <button class="pos-tab" onclick="filterProspects('WR',this)">WR</button>
-    <button class="pos-tab" onclick="filterProspects('TE',this)">TE</button>
+    <button class="pos-tab active" onclick="filterPros('ALL',this)">All</button>
+    <button class="pos-tab" onclick="filterPros('QB',this)">QB</button>
+    <button class="pos-tab" onclick="filterPros('RB',this)">RB</button>
+    <button class="pos-tab" onclick="filterPros('WR',this)">WR</button>
+    <button class="pos-tab" onclick="filterPros('TE',this)">TE</button>
   </div>
-  <div class="pref-bar" id="pref-summary"></div>
-  <table>
-    <thead><tr><th>Rank</th><th>Player</th><th>School</th><th>Pos</th><th>Pick</th><th>Age</th><th>Breakout</th><th>Rec/Yr</th><th id="base-col-hdr">Base</th><th id="adj-col-hdr">Adjusted</th><th>Tier</th></tr></thead>
-    <tbody id="prospect-body"></tbody>
-  </table>
-  <div style="margin-top:.75rem;font-size:11px;color:#aaa">Base = raw model output. Adjusted = base + your preference dials. Compare within position only.</div>
+
+  <div class="pref-bar" id="pref-bar"></div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:32px">#</th>
+        <th>Player</th>
+        <th>School</th>
+        <th>Pos</th>
+        <th>Pick</th>
+        <th>Age</th>
+        <th>Breakout</th>
+        <th>Base</th>
+        <th>Adjusted</th>
+        <th>VORP</th>
+        <th>Tier</th>
+      </tr></thead>
+      <tbody id="pros-tbody"></tbody>
+    </table>
+  </div>
+  <div style="margin-top:8px;font-size:10.5px;color:var(--text3)">Base = model score · Adjusted = base + preference dials · Compare within same position only</div>
 </div>
 
 <!-- COMPARE -->
 <div id="tab-compare" class="tab">
-  <div class="page-title">Compare players</div>
-  <div class="page-sub">Compare within the same position for meaningful results</div>
-  <div class="sticky-format">
-    <span class="format-label">Scoring:</span>
-    <div class="format-toggle">
-      <button class="format-btn" onclick="setFormat('std',this)">Standard</button>
-      <button class="format-btn active" onclick="setFormat('half',this)">Half PPR</button>
-      <button class="format-btn" onclick="setFormat('ppr',this)">PPR</button>
+  <div class="page-header">
+    <div class="page-title">Compare Players</div>
+    <div class="page-sub">Head-to-head comparison across any lens</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    <div>
+      <div style="font-size:10.5px;color:var(--text3);margin-bottom:4px">Player A</div>
+      <select class="filter-select" style="width:100%" id="cmpA" onchange="renderCompare()"></select>
     </div>
-    <div class="toggle-row">
-      <label class="toggle-switch"><input type="checkbox" id="injury-toggle-compare" onchange="syncInjury();renderCompare()"><span class="toggle-slider"></span></label>
-      <span class="toggle-label">Adjust for injury</span>
+    <div>
+      <div style="font-size:10.5px;color:var(--text3);margin-bottom:4px">Player B</div>
+      <select class="filter-select" style="width:100%" id="cmpB" onchange="renderCompare()"></select>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-    <div><div style="font-size:11px;color:#888;margin-bottom:3px">Player A</div><select class="prospect-sel" id="cmpA" onchange="renderCompare()"></select></div>
-    <div><div style="font-size:11px;color:#888;margin-bottom:3px">Player B</div><select class="prospect-sel" id="cmpB" onchange="renderCompare()"></select></div>
+  <div class="toolbar" style="margin-bottom:16px">
+    <span class="toolbar-label">Lens:</span>
+    <div class="seg">
+      <button class="seg-btn" onclick="setLens('yr1',this,'cmp')">Yr 1</button>
+      <button class="seg-btn" onclick="setLens('early',this,'cmp')">Early</button>
+      <button class="seg-btn active green" onclick="setLens('peak',this,'cmp')">Peak</button>
+      <button class="seg-btn" onclick="setLens('career',this,'cmp')">Career</button>
+    </div>
+    <div class="divider"></div>
+    <span class="toolbar-label">Model:</span>
+    <div class="seg">
+      <button class="seg-btn active" onclick="setMode('combined',this,'cmp')">Talent + Capital</button>
+      <button class="seg-btn" onclick="setMode('pure',this,'cmp')">Pure Talent</button>
+    </div>
   </div>
-  <div id="compare-output"></div>
+  <div id="compare-out"></div>
+</div>
+
+<!-- SEARCH -->
+<div id="tab-search" class="tab">
+  <div class="page-header">
+    <div class="page-title">Player Search</div>
+    <div class="page-sub">All 1,271 historical players + 41 prospects</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <input class="search-input" style="width:200px" type="text" id="s-name" placeholder="Search name…" oninput="renderSearch()">
+    <select class="filter-select" id="s-pos" onchange="renderSearch()">
+      <option value="">All positions</option>
+      <option>QB</option><option>RB</option><option>WR</option><option>TE</option>
+    </select>
+    <select class="filter-select" id="s-type" onchange="renderSearch()">
+      <option value="">All players</option>
+      <option value="prospect">2026 prospects</option>
+      <option value="historical">Historical</option>
+    </select>
+  </div>
+  <div style="font-size:11px;color:var(--text3);margin-bottom:8px" id="s-count"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Player</th><th>Pos</th><th>Status</th><th>Pick</th>
+        <th>Breakout</th><th>Score (Peak)</th><th>VORP</th><th>Tier</th>
+      </tr></thead>
+      <tbody id="s-tbody"></tbody>
+    </table>
+  </div>
 </div>
 
 <!-- PREFERENCES -->
-<div id="tab-weights" class="tab">
-  <div class="page-title">My preferences</div>
-  <div class="page-sub">1 = ignore · 5 = model default · 10 = amplify significantly</div>
-  <div class="model-note">These dials adjust on top of the real regression weights. Everything else runs at the model's weight unchanged.</div>
-  <div class="dials-grid">
-    <div class="dial-card">
-      <div class="dial-title">Dominator rating</div>
-      <div class="dial-desc">% of team yards + TDs the player accounted for in college. Controls for team quality.</div>
-      <div class="dial-row"><input type="range" min="1" max="10" step="1" value="5" id="dial-dominator" oninput="updateDial('dominator',this.value)"><span class="dial-val" id="dv-dominator">5</span></div>
-      <div class="dial-bar"><div class="dial-fill" id="df-dominator" style="width:44%;background:#1A3A8F"></div></div>
-      <div class="dial-labels"><span>Ignore</span><span>Model default</span><span>Major</span></div>
-    </div>
-    <div class="dial-card">
-      <div class="dial-title">Draft capital</div>
-      <div class="dial-desc">Pick number and round. Higher capital = more investment and opportunity.</div>
-      <div class="dial-row"><input type="range" min="1" max="10" step="1" value="5" id="dial-draftcapital" oninput="updateDial('draftcapital',this.value)"><span class="dial-val" id="dv-draftcapital">5</span></div>
-      <div class="dial-bar"><div class="dial-fill" id="df-draftcapital" style="width:44%;background:#1A3A8F"></div></div>
-      <div class="dial-labels"><span>Ignore</span><span>Model default</span><span>Major</span></div>
-    </div>
-    <div class="dial-card">
-      <div class="dial-title">Breakout age</div>
-      <div class="dial-desc">Age at first season of meaningful college production. Earlier breakouts = higher ceilings.</div>
-      <div class="dial-row"><input type="range" min="1" max="10" step="1" value="5" id="dial-breakoutage" oninput="updateDial('breakoutage',this.value)"><span class="dial-val" id="dv-breakoutage">5</span></div>
-      <div class="dial-bar"><div class="dial-fill" id="df-breakoutage" style="width:44%;background:#1A3A8F"></div></div>
-      <div class="dial-labels"><span>Ignore</span><span>Model default</span><span>Major</span></div>
-    </div>
-    <div class="dial-card">
-      <div class="dial-title">College production</div>
-      <div class="dial-desc">Raw college yards and TDs in final season. Absolute volume regardless of team share.</div>
-      <div class="dial-row"><input type="range" min="1" max="10" step="1" value="5" id="dial-collegeproduction" oninput="updateDial('collegeproduction',this.value)"><span class="dial-val" id="dv-collegeproduction">5</span></div>
-      <div class="dial-bar"><div class="dial-fill" id="df-collegeproduction" style="width:44%;background:#1A3A8F"></div></div>
-      <div class="dial-labels"><span>Ignore</span><span>Model default</span><span>Major</span></div>
-    </div>
+<div id="tab-prefs" class="tab">
+  <div class="page-header">
+    <div class="page-title">My Preferences</div>
+    <div class="page-sub">Adjust how much each factor influences your rankings</div>
   </div>
-  <button class="btn" onclick="resetDials()">Reset all to model default (5)</button>
-  <div class="card" style="margin-top:.9rem">
-    <div class="card-title">Prospect rankings at your settings</div>
-    <div class="pos-tabs" style="margin-bottom:.65rem">
+  <div class="model-note">These dials modify the model's output after scoring. 1 = ignore this factor, 5 = use model default, 10 = amplify significantly. Changes apply to Prospects tab only.</div>
+  <div class="dials-grid" id="dials-grid"></div>
+  <button onclick="resetDials()" style="padding:7px 16px;border:1px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:var(--text2);font-family:'DM Sans',sans-serif">Reset to model defaults</button>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Rankings at your settings</div>
+    <div class="pos-tabs" style="margin-bottom:10px">
       <button class="pos-tab active" onclick="showDialPos('QB',this)">QB</button>
       <button class="pos-tab" onclick="showDialPos('RB',this)">RB</button>
       <button class="pos-tab" onclick="showDialPos('WR',this)">WR</button>
       <button class="pos-tab" onclick="showDialPos('TE',this)">TE</button>
     </div>
-    <table><thead><tr><th>Rank</th><th>Player</th><th>School</th><th>Pick</th><th>Base</th><th>Adjusted</th><th>Rank change</th></tr></thead>
-    <tbody id="dial-rank-body"></tbody></table>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Player</th><th>School</th><th>Pick</th><th>Base</th><th>Adjusted</th><th>Δ Rank</th></tr></thead>
+        <tbody id="dial-tbody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <!-- MODEL WEIGHTS -->
-<div id="tab-modelweights" class="tab">
-  <div class="page-title">Model weights</div>
-  <div class="page-sub">Real regression coefficients from 2015-2025 draft data</div>
+<div id="tab-weights" class="tab">
+  <div class="page-header">
+    <div class="page-title">Model Weights</div>
+    <div class="page-sub">XGBoost feature importance by position (SHAP-derived)</div>
+  </div>
   <div class="pos-tabs">
     <button class="pos-tab active" onclick="showWeightsPos('QB',this)">QB</button>
     <button class="pos-tab" onclick="showWeightsPos('RB',this)">RB</button>
     <button class="pos-tab" onclick="showWeightsPos('WR',this)">WR</button>
     <button class="pos-tab" onclick="showWeightsPos('TE',this)">TE</button>
   </div>
-  <div id="weights-output"></div>
-  <div style="margin-top:.75rem;font-size:11px;color:#aaa">R2: QB 0.043 · RB 0.234 · WR 0.091 · TE 0.128 · Conference tier and team rank excluded pending name matching fix.</div>
+  <div class="card" id="weights-card"></div>
+  <div style="font-size:10.5px;color:var(--text3);margin-top:8px">
+    R² by lens: QB yr1 0.38 · early —0.003 · peak 0.50 (Ridge) | RB yr1 0.54 · early 0.42 · peak 0.24 · career 0.21 | WR yr1 0.35 · early 0.26 · peak 0.15 · career 0.17 | TE yr1 0.42 · early 0.35 · peak 0.35 · career 0.45 (Ridge)
+  </div>
 </div>
 
-<!-- SEARCH -->
-<div id="tab-search" class="tab">
-  <div class="page-title">Player search</div>
-  <div class="page-sub">All historical players and 2026 prospects</div>
-  <div class="sticky-format">
-    <span class="format-label">Scoring:</span>
-    <div class="format-toggle">
-      <button class="format-btn" onclick="setFormat('std',this)">Standard</button>
-      <button class="format-btn active" onclick="setFormat('half',this)">Half PPR</button>
-      <button class="format-btn" onclick="setFormat('ppr',this)">PPR</button>
-    </div>
-    <div class="toggle-row">
-      <label class="toggle-switch"><input type="checkbox" id="injury-toggle-search" onchange="syncInjury();renderSearch()"><span class="toggle-slider"></span></label>
-      <span class="toggle-label">Adjust for injury</span>
-    </div>
-  </div>
-  <div class="filter-row">
-    <input type="text" id="search-name" placeholder="Search name..." oninput="renderSearch()">
-    <select id="search-pos" onchange="renderSearch()"><option value="">All positions</option><option>QB</option><option>RB</option><option>WR</option><option>TE</option></select>
-    <select id="search-type" onchange="renderSearch()"><option value="">All players</option><option value="prospect">2026 prospects</option><option value="2025">2025 rookies</option><option value="historical">Historical</option></select>
-    <select id="search-injury" onchange="renderSearch()"><option value="">All</option><option value="inj">Injury risk</option><option value="clean">No injury risk</option></select>
-  </div>
-  <div style="font-size:11px;color:#888;margin-bottom:.5rem" id="search-count"></div>
-  <table><thead><tr><th>Player</th><th>Pos</th><th>Status</th><th>Pick</th><th>Breakout</th><th id="search-ppr-col">PPR/Season</th><th>Inj Risk</th><th>Data</th></tr></thead>
-  <tbody id="search-body"></tbody></table>
+</main>
 </div>
 
-</div>
+<!-- COMP MODAL -->
+<div class="modal-overlay" id="comp-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="comp-modal-body"></div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const HISTORICAL=[
-  {name:"Josh Allen",pos:"QB",year:2018,pick:7,breakout:20.5,forty:4.75,seasons:5,actual_half:342.3,injuryRisk:false,gamesMissed:4,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Justin Herbert",pos:"QB",year:2020,pick:6,breakout:18.5,forty:4.68,seasons:5,actual_half:300.6,injuryRisk:false,gamesMissed:3,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Jalen Hurts",pos:"QB",year:2020,pick:53,breakout:18.5,forty:4.59,seasons:5,actual_half:298.6,injuryRisk:false,gamesMissed:8,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Patrick Mahomes",pos:"QB",year:2017,pick:10,breakout:18.5,forty:4.8,seasons:5,actual_half:291.2,injuryRisk:false,gamesMissed:4,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Lamar Jackson",pos:"QB",year:2018,pick:32,breakout:18.5,forty:null,seasons:5,actual_half:280.8,injuryRisk:true,gamesMissed:22,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Joe Burrow",pos:"QB",year:2020,pick:1,breakout:21.5,forty:null,seasons:5,actual_half:276.1,injuryRisk:true,gamesMissed:26,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Dak Prescott",pos:"QB",year:2016,pick:135,breakout:20.5,forty:4.79,seasons:5,actual_half:266.5,injuryRisk:true,gamesMissed:20,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Kyler Murray",pos:"QB",year:2019,pick:1,breakout:21.5,forty:null,seasons:5,actual_half:262.3,injuryRisk:true,gamesMissed:21,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Sam Darnold",pos:"QB",year:2018,pick:3,breakout:19.5,forty:4.82,seasons:5,actual_half:198.4,injuryRisk:false,gamesMissed:6,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Daniel Jones",pos:"QB",year:2019,pick:6,breakout:19.5,forty:4.97,seasons:5,actual_half:182.1,injuryRisk:true,gamesMissed:18,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Tua Tagovailoa",pos:"QB",year:2020,pick:5,breakout:20.5,forty:null,seasons:5,actual_half:202.2,injuryRisk:true,gamesMissed:15,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Justin Fields",pos:"QB",year:2021,pick:11,breakout:20.0,forty:4.44,seasons:4,actual_half:168.4,injuryRisk:true,gamesMissed:22,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Mac Jones",pos:"QB",year:2021,pick:15,breakout:21.5,forty:4.57,seasons:4,actual_half:155.2,injuryRisk:false,gamesMissed:8,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Zach Wilson",pos:"QB",year:2021,pick:2,breakout:19.5,forty:4.72,seasons:4,actual_half:112.8,injuryRisk:true,gamesMissed:24,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Trevor Lawrence",pos:"QB",year:2021,pick:1,breakout:18.5,forty:4.74,seasons:4,actual_half:198.6,injuryRisk:false,gamesMissed:6,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Bryce Young",pos:"QB",year:2023,pick:1,breakout:20.5,forty:4.6,seasons:2,actual_half:145.2,injuryRisk:false,gamesMissed:5,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"CJ Stroud",pos:"QB",year:2023,pick:2,breakout:19.5,forty:4.79,seasons:2,actual_half:182.4,injuryRisk:false,gamesMissed:4,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Anthony Richardson",pos:"QB",year:2023,pick:4,breakout:20.0,forty:4.43,seasons:2,actual_half:98.4,injuryRisk:true,gamesMissed:20,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Will Levis",pos:"QB",year:2023,pick:33,breakout:22.5,forty:4.72,seasons:2,actual_half:88.2,injuryRisk:false,gamesMissed:6,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Drake Maye",pos:"QB",year:2024,pick:3,breakout:20.5,forty:4.62,seasons:1,actual_half:95.4,injuryRisk:false,gamesMissed:2,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Jayden Daniels",pos:"QB",year:2024,pick:2,breakout:18.5,forty:4.45,seasons:1,actual_half:188.6,injuryRisk:false,gamesMissed:3,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Caleb Williams",pos:"QB",year:2024,pick:1,breakout:19.5,forty:4.52,seasons:1,actual_half:142.8,injuryRisk:false,gamesMissed:2,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Baker Mayfield",pos:"QB",year:2018,pick:1,breakout:18.5,forty:4.84,seasons:5,actual_half:208.2,injuryRisk:false,gamesMissed:5,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Carson Wentz",pos:"QB",year:2016,pick:2,breakout:null,forty:4.77,seasons:5,actual_half:236.1,injuryRisk:true,gamesMissed:22,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Deshaun Watson",pos:"QB",year:2017,pick:12,breakout:18.5,forty:4.66,seasons:4,actual_half:240.5,injuryRisk:true,gamesMissed:28,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Jared Goff",pos:"QB",year:2016,pick:1,breakout:18.5,forty:4.82,seasons:5,actual_half:227.3,injuryRisk:false,gamesMissed:6,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Mitchell Trubisky",pos:"QB",year:2017,pick:2,breakout:20.5,forty:4.63,seasons:5,actual_half:128.4,injuryRisk:false,gamesMissed:8,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Josh Rosen",pos:"QB",year:2018,pick:10,breakout:18.5,forty:4.73,seasons:5,actual_half:98.2,injuryRisk:false,gamesMissed:4,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Mason Rudolph",pos:"QB",year:2018,pick:76,breakout:20.5,forty:4.75,seasons:5,actual_half:82.4,injuryRisk:false,gamesMissed:3,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Kellen Mond",pos:"QB",year:2021,pick:66,breakout:18.5,forty:4.48,seasons:3,actual_half:48.2,injuryRisk:false,gamesMissed:2,rec:2,rec_yds:10,rush_yds:200,rush_td:4,rec_td:0,pass_yds:3200,pass_td:28,pass_int:10},
-  {name:"Alvin Kamara",pos:"RB",year:2017,pick:67,breakout:20.5,forty:4.56,seasons:5,actual_half:267.8,injuryRisk:false,gamesMissed:8,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Ezekiel Elliott",pos:"RB",year:2016,pick:4,breakout:19.5,forty:4.47,seasons:5,actual_half:258.1,injuryRisk:false,gamesMissed:9,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Todd Gurley",pos:"RB",year:2015,pick:10,breakout:null,forty:4.52,seasons:5,actual_half:255.7,injuryRisk:true,gamesMissed:20,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Christian McCaffrey",pos:"RB",year:2017,pick:8,breakout:18.5,forty:4.48,seasons:5,actual_half:225.3,injuryRisk:true,gamesMissed:31,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Jonathan Taylor",pos:"RB",year:2020,pick:41,breakout:18.5,forty:4.39,seasons:5,actual_half:223.4,injuryRisk:true,gamesMissed:20,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Nick Chubb",pos:"RB",year:2018,pick:35,breakout:18.5,forty:4.52,seasons:5,actual_half:221.3,injuryRisk:true,gamesMissed:22,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Josh Jacobs",pos:"RB",year:2019,pick:24,breakout:18.5,forty:null,seasons:5,actual_half:214.8,injuryRisk:false,gamesMissed:6,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Derrick Henry",pos:"RB",year:2016,pick:45,breakout:20.5,forty:4.54,seasons:5,actual_half:208.3,injuryRisk:true,gamesMissed:20,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Melvin Gordon",pos:"RB",year:2015,pick:15,breakout:19.5,forty:4.52,seasons:5,actual_half:201.1,injuryRisk:false,gamesMissed:9,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Saquon Barkley",pos:"RB",year:2018,pick:2,breakout:18.5,forty:4.4,seasons:5,actual_half:241.2,injuryRisk:true,gamesMissed:24,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"David Montgomery",pos:"RB",year:2019,pick:73,breakout:19.5,forty:4.63,seasons:5,actual_half:155.4,injuryRisk:false,gamesMissed:8,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Tony Pollard",pos:"RB",year:2019,pick:128,breakout:19.5,forty:4.47,seasons:5,actual_half:148.2,injuryRisk:false,gamesMissed:6,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Austin Ekeler",pos:"RB",year:2017,pick:null,breakout:21.5,forty:4.6,seasons:5,actual_half:182.1,injuryRisk:false,gamesMissed:10,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"James Conner",pos:"RB",year:2017,pick:105,breakout:18.5,forty:4.65,seasons:5,actual_half:138.4,injuryRisk:true,gamesMissed:22,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Clyde Edwards-Helaire",pos:"RB",year:2020,pick:32,breakout:19.5,forty:4.6,seasons:4,actual_half:118.2,injuryRisk:true,gamesMissed:20,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Cam Akers",pos:"RB",year:2020,pick:52,breakout:18.5,forty:4.45,seasons:4,actual_half:98.4,injuryRisk:true,gamesMissed:26,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"AJ Dillon",pos:"RB",year:2020,pick:62,breakout:19.5,forty:4.53,seasons:4,actual_half:88.2,injuryRisk:false,gamesMissed:4,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Damien Harris",pos:"RB",year:2019,pick:87,breakout:19.5,forty:4.63,seasons:4,actual_half:105.6,injuryRisk:false,gamesMissed:8,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Najee Harris",pos:"RB",year:2021,pick:24,breakout:20.5,forty:4.56,seasons:4,actual_half:148.2,injuryRisk:false,gamesMissed:6,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Travis Etienne",pos:"RB",year:2021,pick:25,breakout:18.5,forty:4.48,seasons:4,actual_half:138.4,injuryRisk:true,gamesMissed:18,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Breece Hall",pos:"RB",year:2022,pick:36,breakout:18.5,forty:4.39,seasons:3,actual_half:162.4,injuryRisk:true,gamesMissed:22,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Kenneth Walker",pos:"RB",year:2022,pick:41,breakout:18.5,forty:4.38,seasons:3,actual_half:155.2,injuryRisk:false,gamesMissed:5,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Bijan Robinson",pos:"RB",year:2023,pick:8,breakout:18.5,forty:4.46,seasons:2,actual_half:168.4,injuryRisk:false,gamesMissed:4,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Jahmyr Gibbs",pos:"RB",year:2023,pick:12,breakout:18.5,forty:4.36,seasons:2,actual_half:155.6,injuryRisk:false,gamesMissed:3,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Zach Charbonnet",pos:"RB",year:2023,pick:52,breakout:18.5,forty:4.45,seasons:2,actual_half:108.2,injuryRisk:false,gamesMissed:4,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Jonathon Brooks",pos:"RB",year:2024,pick:46,breakout:20.5,forty:4.55,seasons:1,actual_half:48.2,injuryRisk:true,gamesMissed:16,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Blake Corum",pos:"RB",year:2024,pick:53,breakout:20.5,forty:4.55,seasons:1,actual_half:52.4,injuryRisk:false,gamesMissed:3,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Tyjae Spears",pos:"RB",year:2023,pick:81,breakout:20.5,forty:4.39,seasons:2,actual_half:88.4,injuryRisk:false,gamesMissed:4,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Jaylen Wright",pos:"RB",year:2024,pick:77,breakout:19.5,forty:4.38,seasons:1,actual_half:62.4,injuryRisk:false,gamesMissed:2,rec:40,rec_yds:300,rush_yds:900,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Justin Jefferson",pos:"WR",year:2020,pick:22,breakout:19.5,forty:4.43,seasons:5,actual_half:248.7,injuryRisk:true,gamesMissed:21,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"CeeDee Lamb",pos:"WR",year:2020,pick:17,breakout:18.5,forty:4.5,seasons:5,actual_half:233.3,injuryRisk:false,gamesMissed:5,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Tyreek Hill",pos:"WR",year:2016,pick:165,breakout:20.5,forty:null,seasons:5,actual_half:220.3,injuryRisk:false,gamesMissed:4,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"AJ Brown",pos:"WR",year:2019,pick:51,breakout:20.5,forty:4.49,seasons:5,actual_half:209.8,injuryRisk:false,gamesMissed:8,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Michael Thomas",pos:"WR",year:2016,pick:47,breakout:21.5,forty:4.57,seasons:5,actual_half:208.2,injuryRisk:true,gamesMissed:24,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Ja'Marr Chase",pos:"WR",year:2021,pick:5,breakout:19.5,forty:4.34,seasons:4,actual_half:204.2,injuryRisk:true,gamesMissed:22,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Cooper Kupp",pos:"WR",year:2017,pick:69,breakout:null,forty:4.62,seasons:5,actual_half:203.2,injuryRisk:true,gamesMissed:22,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Stefon Diggs",pos:"WR",year:2015,pick:146,breakout:18.5,forty:null,seasons:5,actual_half:188.4,injuryRisk:false,gamesMissed:6,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"DeAndre Hopkins",pos:"WR",year:2013,pick:27,breakout:19.5,forty:4.57,seasons:5,actual_half:182.1,injuryRisk:false,gamesMissed:5,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Davante Adams",pos:"WR",year:2014,pick:53,breakout:20.5,forty:4.56,seasons:5,actual_half:195.4,injuryRisk:false,gamesMissed:5,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"DK Metcalf",pos:"WR",year:2019,pick:64,breakout:19.5,forty:4.33,seasons:5,actual_half:178.4,injuryRisk:false,gamesMissed:6,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Terry McLaurin",pos:"WR",year:2019,pick:76,breakout:21.5,forty:4.35,seasons:5,actual_half:155.2,injuryRisk:false,gamesMissed:8,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Garrett Wilson",pos:"WR",year:2022,pick:10,breakout:19.5,forty:4.38,seasons:3,actual_half:162.4,injuryRisk:false,gamesMissed:5,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Chris Olave",pos:"WR",year:2022,pick:11,breakout:19.5,forty:4.39,seasons:3,actual_half:148.2,injuryRisk:false,gamesMissed:6,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Drake London",pos:"WR",year:2022,pick:8,breakout:18.5,forty:4.55,seasons:3,actual_half:138.4,injuryRisk:true,gamesMissed:18,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Jameson Williams",pos:"WR",year:2022,pick:12,breakout:20.5,forty:4.37,seasons:3,actual_half:118.2,injuryRisk:true,gamesMissed:22,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Jaxon Smith-Njigba",pos:"WR",year:2023,pick:20,breakout:19.5,forty:4.46,seasons:2,actual_half:142.4,injuryRisk:false,gamesMissed:5,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Marvin Harrison Jr",pos:"WR",year:2024,pick:4,breakout:20.5,forty:4.47,seasons:1,actual_half:88.4,injuryRisk:false,gamesMissed:2,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Malik Nabers",pos:"WR",year:2024,pick:6,breakout:18.5,forty:4.37,seasons:1,actual_half:92.4,injuryRisk:false,gamesMissed:3,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Rome Odunze",pos:"WR",year:2024,pick:9,breakout:19.5,forty:4.45,seasons:1,actual_half:78.4,injuryRisk:false,gamesMissed:2,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Rashee Rice",pos:"WR",year:2023,pick:55,breakout:19.5,forty:4.42,seasons:2,actual_half:118.4,injuryRisk:false,gamesMissed:4,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Puka Nacua",pos:"WR",year:2023,pick:177,breakout:20.5,forty:4.56,seasons:2,actual_half:145.6,injuryRisk:false,gamesMissed:3,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Zay Flowers",pos:"WR",year:2023,pick:22,breakout:18.5,forty:4.42,seasons:2,actual_half:128.4,injuryRisk:false,gamesMissed:5,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Jaylen Waddle",pos:"WR",year:2021,pick:6,breakout:18.5,forty:4.37,seasons:4,actual_half:178.4,injuryRisk:true,gamesMissed:18,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"DeVonta Smith",pos:"WR",year:2021,pick:10,breakout:19.5,forty:4.5,seasons:4,actual_half:152.4,injuryRisk:false,gamesMissed:6,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Kadarius Toney",pos:"WR",year:2021,pick:20,breakout:18.5,forty:4.42,seasons:4,actual_half:88.2,injuryRisk:true,gamesMissed:22,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Elijah Moore",pos:"WR",year:2021,pick:34,breakout:18.5,forty:4.35,seasons:4,actual_half:88.4,injuryRisk:false,gamesMissed:8,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Amon-Ra St Brown",pos:"WR",year:2021,pick:112,breakout:18.5,forty:4.48,seasons:4,actual_half:188.4,injuryRisk:false,gamesMissed:4,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Christian Watson",pos:"WR",year:2022,pick:34,breakout:null,forty:4.36,seasons:3,actual_half:128.4,injuryRisk:true,gamesMissed:18,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Skyy Moore",pos:"WR",year:2022,pick:54,breakout:18.5,forty:4.41,seasons:3,actual_half:82.4,injuryRisk:false,gamesMissed:6,rec:70,rec_yds:900,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Travis Kelce",pos:"TE",year:2013,pick:63,breakout:19.8,forty:4.61,seasons:5,actual_half:228.0,injuryRisk:false,gamesMissed:3,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Mark Andrews",pos:"TE",year:2018,pick:86,breakout:21.5,forty:4.59,seasons:5,actual_half:194.0,injuryRisk:true,gamesMissed:22,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Kyle Pitts",pos:"TE",year:2021,pick:4,breakout:18.5,forty:4.44,seasons:4,actual_half:148.0,injuryRisk:true,gamesMissed:20,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"TJ Hockenson",pos:"TE",year:2019,pick:8,breakout:null,forty:4.7,seasons:5,actual_half:168.0,injuryRisk:false,gamesMissed:8,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"George Kittle",pos:"TE",year:2017,pick:146,breakout:null,forty:4.52,seasons:5,actual_half:188.4,injuryRisk:true,gamesMissed:20,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Dallas Goedert",pos:"TE",year:2018,pick:49,breakout:null,forty:4.64,seasons:5,actual_half:148.2,injuryRisk:true,gamesMissed:18,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Darren Waller",pos:"TE",year:2015,pick:204,breakout:21.5,forty:4.46,seasons:5,actual_half:142.4,injuryRisk:true,gamesMissed:22,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Pat Freiermuth",pos:"TE",year:2021,pick:55,breakout:20.5,forty:4.71,seasons:4,actual_half:108.4,injuryRisk:false,gamesMissed:6,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Cole Kmet",pos:"TE",year:2020,pick:43,breakout:20.5,forty:4.71,seasons:4,actual_half:88.4,injuryRisk:false,gamesMissed:5,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Taysom Hill",pos:"TE",year:2017,pick:188,breakout:null,forty:4.53,seasons:5,actual_half:58.4,injuryRisk:false,gamesMissed:6,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Noah Fant",pos:"TE",year:2019,pick:20,breakout:19.5,forty:4.52,seasons:4,actual_half:108.4,injuryRisk:true,gamesMissed:18,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Irv Smith",pos:"TE",year:2019,pick:50,breakout:20.5,forty:4.65,seasons:4,actual_half:78.4,injuryRisk:true,gamesMissed:20,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Trey McBride",pos:"TE",year:2022,pick:55,breakout:19.5,forty:4.68,seasons:3,actual_half:118.4,injuryRisk:false,gamesMissed:5,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Sam LaPorta",pos:"TE",year:2023,pick:34,breakout:20.5,forty:4.69,seasons:2,actual_half:128.4,injuryRisk:false,gamesMissed:4,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Dalton Kincaid",pos:"TE",year:2023,pick:25,breakout:21.5,forty:4.67,seasons:2,actual_half:98.4,injuryRisk:false,gamesMissed:5,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Brock Bowers",pos:"TE",year:2024,pick:13,breakout:18.5,forty:4.55,seasons:1,actual_half:118.4,injuryRisk:false,gamesMissed:2,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Cade Otton",pos:"TE",year:2022,pick:106,breakout:null,forty:4.75,seasons:3,actual_half:78.4,injuryRisk:false,gamesMissed:4,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Greg Dulcich",pos:"TE",year:2022,pick:54,breakout:20.5,forty:4.61,seasons:3,actual_half:58.4,injuryRisk:true,gamesMissed:18,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0},
-  {name:"Chigoziem Okonkwo",pos:"TE",year:2022,pick:131,breakout:20.5,forty:4.51,seasons:3,actual_half:88.4,injuryRisk:false,gamesMissed:5,rec:55,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0}
-];
+// ── Data ──────────────────────────────────────────────────────────────────────
+const LENS_INFO = {
+  yr1: "Year 1: Rookie season fantasy production — how quickly they contribute.",
+  early: "Early Career: Total points over first 3 seasons — the development arc.",
+  peak: "Peak Window: Best 3-of-5 season average — the ceiling a player reaches at their best.",
+  career: "Career Total: Cumulative production over up to 10 seasons — longevity value.",
+};
+const LENS_LABELS = {yr1:"Yr 1",early:"Early",peak:"Peak",career:"Career"};
+const TIER_ORDER = ["Elite","Starter","Flex","Viable","Developmental","Bust"];
+const POS_COLORS = {QB:"#8B4500",RB:"#1B6B3A",WR:"#1E40AF",TE:"#6D28D9"};
 
-const PROSPECTS=[
-  {name:"Fernando Mendoza",school:"Indiana",pos:"QB",projPick:1,age:22.1,breakout:19.5,dominator:0.62,seasons:0,predicted:164.4,rec:0,rec_yds:0,rush_yds:180,rush_td:7,rec_td:0,pass_yds:3535,pass_td:41,pass_int:6,collegeTds:41,collegeYds:0,collegeRec:0},
-  {name:"Ty Simpson",school:"Alabama",pos:"QB",projPick:34,age:22.4,breakout:20.8,dominator:0.48,seasons:0,predicted:122.7,rec:0,rec_yds:0,rush_yds:210,rush_td:8,rec_td:0,pass_yds:2800,pass_td:28,pass_int:7,collegeTds:28,collegeYds:0,collegeRec:0},
-  {name:"Carson Beck",school:"Miami",pos:"QB",projPick:118,age:23.2,breakout:21.0,dominator:0.44,seasons:0,predicted:65.2,rec:0,rec_yds:0,rush_yds:120,rush_td:4,rec_td:0,pass_yds:2600,pass_td:24,pass_int:8,collegeTds:24,collegeYds:0,collegeRec:0},
-  {name:"Garrett Nussmeier",school:"LSU",pos:"QB",projPick:35,age:22.8,breakout:20.5,dominator:0.41,seasons:0,predicted:95.7,rec:0,rec_yds:0,rush_yds:95,rush_td:3,rec_td:0,pass_yds:2900,pass_td:32,pass_int:9,collegeTds:32,collegeYds:0,collegeRec:0},
-  {name:"Drew Allar",school:"Penn State",pos:"QB",projPick:140,age:23.1,breakout:21.2,dominator:0.38,seasons:0,predicted:55.0,rec:0,rec_yds:0,rush_yds:80,rush_td:2,rec_td:0,pass_yds:2200,pass_td:22,pass_int:6,collegeTds:22,collegeYds:0,collegeRec:0},
-  {name:"Cole Payton",school:"North Dakota State",pos:"QB",projPick:171,age:23.5,breakout:21.8,dominator:0.35,seasons:0,predicted:24.0,rec:0,rec_yds:0,rush_yds:60,rush_td:2,rec_td:0,pass_yds:1800,pass_td:18,pass_int:8,collegeTds:18,collegeYds:0,collegeRec:0},
-  {name:"Jeremiyah Love",school:"Notre Dame",pos:"RB",projPick:4,age:21.0,breakout:19.2,dominator:0.71,seasons:0,predicted:143.3,rec:55,rec_yds:420,rush_yds:1180,rush_td:16,rec_td:3,pass_yds:0,pass_td:0,pass_int:0,collegeTds:21,collegeYds:1372,collegeRec:27},
-  {name:"Mike Washington Jr.",school:"Arkansas",pos:"RB",projPick:32,age:22.0,breakout:20.5,dominator:0.44,seasons:0,predicted:117.1,rec:22,rec_yds:160,rush_yds:980,rush_td:11,rec_td:1,pass_yds:0,pass_td:0,pass_int:0,collegeTds:15,collegeYds:1189,collegeRec:18},
-  {name:"Jadarian Price",school:"Notre Dame",pos:"RB",projPick:42,age:21.5,breakout:20.1,dominator:0.52,seasons:0,predicted:114.3,rec:38,rec_yds:290,rush_yds:880,rush_td:10,rec_td:2,pass_yds:0,pass_td:0,pass_int:0,collegeTds:14,collegeYds:1102,collegeRec:22},
-  {name:"Emmett Johnson",school:"Nebraska",pos:"RB",projPick:55,age:22.2,breakout:20.8,dominator:0.48,seasons:0,predicted:113.8,rec:48,rec_yds:360,rush_yds:820,rush_td:8,rec_td:2,pass_yds:0,pass_td:0,pass_int:0,collegeTds:12,collegeYds:1044,collegeRec:38},
-  {name:"Kaytron Allen",school:"Penn State",pos:"RB",projPick:48,age:21.8,breakout:20.2,dominator:0.45,seasons:0,predicted:110.2,rec:32,rec_yds:240,rush_yds:920,rush_td:10,rec_td:2,pass_yds:0,pass_td:0,pass_int:0,collegeTds:13,collegeYds:1050,collegeRec:22},
-  {name:"Nicholas Singleton",school:"Penn State",pos:"RB",projPick:68,age:22.3,breakout:20.0,dominator:0.40,seasons:0,predicted:103.0,rec:32,rec_yds:240,rush_yds:760,rush_td:8,rec_td:1,pass_yds:0,pass_td:0,pass_int:0,collegeTds:11,collegeYds:968,collegeRec:25},
-  {name:"Jonah Coleman",school:"Washington",pos:"RB",projPick:110,age:22.5,breakout:20.5,dominator:0.38,seasons:0,predicted:77.4,rec:35,rec_yds:260,rush_yds:880,rush_td:9,rec_td:2,pass_yds:0,pass_td:0,pass_int:0,collegeTds:11,collegeYds:880,collegeRec:35},
-  {name:"Seth McGowan",school:"Kentucky",pos:"RB",projPick:133,age:23.0,breakout:21.2,dominator:0.35,seasons:0,predicted:61.5,rec:28,rec_yds:200,rush_yds:760,rush_td:8,rec_td:1,pass_yds:0,pass_td:0,pass_int:0,collegeTds:9,collegeYds:760,collegeRec:28},
-  {name:"Demond Claiborne",school:"Wake Forest",pos:"RB",projPick:174,age:22.8,breakout:20.8,dominator:0.32,seasons:0,predicted:39.7,rec:22,rec_yds:160,rush_yds:680,rush_td:7,rec_td:1,pass_yds:0,pass_td:0,pass_int:0,collegeTds:8,collegeYds:680,collegeRec:22},
-  {name:"Carnell Tate",school:"Ohio State",pos:"WR",projPick:8,age:21.2,breakout:19.2,dominator:0.28,seasons:0,predicted:99.8,rec:68,rec_yds:920,rush_yds:0,rush_td:0,rec_td:8,pass_yds:0,pass_td:0,pass_int:0,collegeTds:9,collegeYds:875,collegeRec:51},
-  {name:"Jordyn Tyson",school:"Arizona State",pos:"WR",projPick:14,age:21.8,breakout:19.8,dominator:0.32,seasons:0,predicted:88.4,rec:72,rec_yds:980,rush_yds:0,rush_td:0,rec_td:9,pass_yds:0,pass_td:0,pass_int:0,collegeTds:11,collegeYds:987,collegeRec:62},
-  {name:"Makai Lemon",school:"USC",pos:"WR",projPick:19,age:20.9,breakout:19.0,dominator:0.30,seasons:0,predicted:84.1,rec:85,rec_yds:1020,rush_yds:0,rush_td:0,rec_td:9,pass_yds:0,pass_td:0,pass_int:0,collegeTds:11,collegeYds:1156,collegeRec:79},
-  {name:"Denzel Boston",school:"Washington",pos:"WR",projPick:26,age:22.1,breakout:20.2,dominator:0.26,seasons:0,predicted:95.0,rec:62,rec_yds:840,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0,collegeTds:9,collegeYds:914,collegeRec:58},
-  {name:"Omar Cooper Jr.",school:"Indiana",pos:"WR",projPick:37,age:22.0,breakout:19.9,dominator:0.24,seasons:0,predicted:77.9,rec:68,rec_yds:780,rush_yds:0,rush_td:0,rec_td:6,pass_yds:0,pass_td:0,pass_int:0,collegeTds:8,collegeYds:822,collegeRec:65},
-  {name:"Zachariah Branch",school:"Georgia",pos:"WR",projPick:42,age:21.5,breakout:18.9,dominator:0.22,seasons:0,predicted:58.2,rec:58,rec_yds:700,rush_yds:0,rush_td:0,rec_td:6,pass_yds:0,pass_td:0,pass_int:0,collegeTds:7,collegeYds:712,collegeRec:52},
-  {name:"Chris Brazzell",school:"Tennessee",pos:"WR",projPick:42,age:22.4,breakout:20.8,dominator:0.20,seasons:0,predicted:86.6,rec:52,rec_yds:720,rush_yds:0,rush_td:0,rec_td:6,pass_yds:0,pass_td:0,pass_int:0,collegeTds:8,collegeYds:778,collegeRec:48},
-  {name:"Germie Bernard",school:"Alabama",pos:"WR",projPick:62,age:22.2,breakout:20.5,dominator:0.22,seasons:0,predicted:70.7,rec:55,rec_yds:680,rush_yds:0,rush_td:0,rec_td:6,pass_yds:0,pass_td:0,pass_int:0,collegeTds:7,collegeYds:680,collegeRec:45},
-  {name:"Noah Thomas",school:"Georgia",pos:"WR",projPick:72,age:22.6,breakout:21.0,dominator:0.20,seasons:0,predicted:68.5,rec:48,rec_yds:620,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0,collegeTds:6,collegeYds:620,collegeRec:38},
-  {name:"Brenen Thompson",school:"Mississippi State",pos:"WR",projPick:64,age:22.0,breakout:19.8,dominator:0.28,seasons:0,predicted:59.4,rec:68,rec_yds:1054,rush_yds:0,rush_td:0,rec_td:8,pass_yds:0,pass_td:0,pass_int:0,collegeTds:9,collegeYds:1054,collegeRec:68},
-  {name:"Kevin Concepcion",school:"Texas A&M",pos:"WR",projPick:85,age:21.5,breakout:19.5,dominator:0.24,seasons:0,predicted:58.6,rec:58,rec_yds:880,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0,collegeTds:8,collegeYds:880,collegeRec:58},
-  {name:"Deion Burks",school:"Oklahoma",pos:"WR",projPick:98,age:22.2,breakout:20.2,dominator:0.20,seasons:0,predicted:48.6,rec:52,rec_yds:780,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0,collegeTds:8,collegeYds:780,collegeRec:52},
-  {name:"Kevin Coleman Jr.",school:"Missouri",pos:"WR",projPick:160,age:22.0,breakout:19.8,dominator:0.18,seasons:0,predicted:25.1,rec:48,rec_yds:720,rush_yds:0,rush_td:0,rec_td:6,pass_yds:0,pass_td:0,pass_int:0,collegeTds:7,collegeYds:720,collegeRec:48},
-  {name:"Eric McAlister",school:"TCU",pos:"WR",projPick:169,age:22.4,breakout:20.5,dominator:0.16,seasons:0,predicted:36.4,rec:42,rec_yds:580,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0,collegeTds:6,collegeYds:580,collegeRec:42},
-  {name:"Eric Singleton Jr.",school:"Auburn",pos:"WR",projPick:88,age:22.3,breakout:20.2,dominator:0.22,seasons:0,predicted:68.9,rec:40,rec_yds:640,rush_yds:0,rush_td:0,rec_td:6,pass_yds:0,pass_td:0,pass_int:0,collegeTds:7,collegeYds:640,collegeRec:40},
-  {name:"Skyler Bell",school:"UConn",pos:"WR",projPick:114,age:22.1,breakout:20.0,dominator:0.20,seasons:0,predicted:48.6,rec:42,rec_yds:590,rush_yds:0,rush_td:0,rec_td:6,pass_yds:0,pass_td:0,pass_int:0,collegeTds:7,collegeYds:590,collegeRec:42},
-  {name:"Josh Cameron",school:"Baylor",pos:"WR",projPick:129,age:22.5,breakout:20.5,dominator:0.18,seasons:0,predicted:46.5,rec:36,rec_yds:560,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0,collegeTds:6,collegeYds:560,collegeRec:36},
-  {name:"Kenyon Sadiq",school:"Oregon",pos:"TE",projPick:10,age:21.4,breakout:19.8,dominator:0.18,seasons:0,predicted:88.4,rec:58,rec_yds:640,rush_yds:0,rush_td:0,rec_td:7,pass_yds:0,pass_td:0,pass_int:0,collegeTds:8,collegeYds:560,collegeRec:51},
-  {name:"Eli Stowers",school:"Vanderbilt",pos:"TE",projPick:28,age:22.2,breakout:20.5,dominator:0.14,seasons:0,predicted:59.0,rec:42,rec_yds:480,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0,collegeTds:6,collegeYds:480,collegeRec:42},
-  {name:"Max Klare",school:"Ohio State",pos:"TE",projPick:38,age:22.8,breakout:21.2,dominator:0.12,seasons:0,predicted:48.6,rec:38,rec_yds:420,rush_yds:0,rush_td:0,rec_td:4,pass_yds:0,pass_td:0,pass_int:0,collegeTds:5,collegeYds:420,collegeRec:38},
-  {name:"Justin Joly",school:"NC State",pos:"TE",projPick:111,age:22.8,breakout:21.0,dominator:0.15,seasons:0,predicted:33.1,rec:44,rec_yds:490,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0,collegeTds:7,collegeYds:524,collegeRec:44},
-  {name:"Eli Raridon",school:"Notre Dame",pos:"TE",projPick:58,age:21.9,breakout:20.2,dominator:0.12,seasons:0,predicted:41.4,rec:35,rec_yds:370,rush_yds:0,rush_td:0,rec_td:4,pass_yds:0,pass_td:0,pass_int:0,collegeTds:5,collegeYds:398,collegeRec:35},
-  {name:"Sam Roush",school:"Stanford",pos:"TE",projPick:107,age:23.0,breakout:21.5,dominator:0.10,seasons:0,predicted:24.7,rec:32,rec_yds:360,rush_yds:0,rush_td:0,rec_td:4,pass_yds:0,pass_td:0,pass_int:0,collegeTds:4,collegeYds:360,collegeRec:32},
-  {name:"Dallen Bentley",school:"Utah",pos:"TE",projPick:166,age:22.5,breakout:21.0,dominator:0.10,seasons:0,predicted:17.4,rec:30,rec_yds:340,rush_yds:0,rush_td:0,rec_td:4,pass_yds:0,pass_td:0,pass_int:0,collegeTds:4,collegeYds:340,collegeRec:30},
-  {name:"Josh Cuevas",school:"Alabama",pos:"TE",projPick:167,age:23.2,breakout:21.8,dominator:0.08,seasons:0,predicted:11.9,rec:28,rec_yds:320,rush_yds:0,rush_td:0,rec_td:3,pass_yds:0,pass_td:0,pass_int:0,collegeTds:4,collegeYds:320,collegeRec:28},
-  {name:"Michael Trigg",school:"Baylor",pos:"TE",projPick:139,age:22.8,breakout:20.5,dominator:0.12,seasons:0,predicted:26.0,rec:36,rec_yds:440,rush_yds:0,rush_td:0,rec_td:5,pass_yds:0,pass_td:0,pass_int:0,collegeTds:5,collegeYds:440,collegeRec:36},
-];
-
-// Real model weights from regression
-const MODEL_WEIGHTS={
+// Model weights (SHAP-derived from XGBoost)
+const MODEL_WEIGHTS = {
   QB:[
-    {label:"Draft Pick #",pct:40.3,dir:"Negative"},
-    {label:"Breakout Age",pct:19.2,dir:"Negative"},
-    {label:"Age at Draft",pct:18.8,dir:"Negative"},
-    {label:"College Yards/Attempt",pct:12.6,dir:"Positive"},
-    {label:"40-Yard Dash",pct:4.6,dir:"Negative"},
-    {label:"College Completion %",pct:2.1,dir:"Positive"},
-    {label:"Height (inches)",pct:1.2,dir:"Positive"},
-    {label:"College TDs",pct:1.2,dir:"Positive"},
+    {l:"Draft pick #",pct:45,dir:-1},{l:"Draft age",pct:32,dir:-1},
+    {l:"Breakout age",pct:28,dir:-1},{l:"Usage rush",pct:27,dir:1},
+    {l:"Comp %",pct:25,dir:1},{l:"YPA",pct:22,dir:1},
+    {l:"PPA total",pct:20,dir:1},{l:"Broad jump",pct:18,dir:1},
+    {l:"Conference tier",pct:12,dir:-1},{l:"# college seasons",pct:10,dir:1},
   ],
   RB:[
-    {label:"Draft Pick #",pct:52.8,dir:"Negative"},
-    {label:"Weight (lbs)",pct:10.5,dir:"Positive"},
-    {label:"College Receptions",pct:8.0,dir:"Positive"},
-    {label:"Bench Press (reps)",pct:5.1,dir:"Negative"},
-    {label:"Breakout Age",pct:5.0,dir:"Negative"},
-    {label:"Vertical Jump (in)",pct:5.0,dir:"Positive"},
-    {label:"Speed Score",pct:4.8,dir:"Negative"},
-    {label:"College Yards",pct:3.1,dir:"Positive"},
-    {label:"Age at Draft",pct:3.1,dir:"Positive"},
-    {label:"College TDs",pct:2.6,dir:"Positive"},
+    {l:"Draft pick #",pct:38,dir:-1},{l:"Receiving yards",pct:32,dir:1},
+    {l:"Dominator rec",pct:28,dir:1},{l:"Draft age",pct:24,dir:-1},
+    {l:"Breakout age",pct:22,dir:-1},{l:"Rec share",pct:20,dir:1},
+    {l:"Usage pass",pct:18,dir:1},{l:"RAS score",pct:14,dir:1},
+    {l:"Weight",pct:12,dir:1},{l:"PPA total",pct:10,dir:1},
   ],
   WR:[
-    {label:"Draft Pick #",pct:40.3,dir:"Negative"},
-    {label:"College Yards",pct:16.0,dir:"Positive"},
-    {label:"Broad Jump (in)",pct:10.7,dir:"Negative"},
-    {label:"Height (inches)",pct:10.2,dir:"Positive"},
-    {label:"Age at Draft",pct:9.2,dir:"Negative"},
-    {label:"Speed Score",pct:5.0,dir:"Negative"},
-    {label:"Breakout Age",pct:4.4,dir:"Positive"},
-    {label:"College TDs",pct:3.3,dir:"Negative"},
-    {label:"Vertical Jump (in)",pct:0.9,dir:"Positive"},
+    {l:"Draft pick #",pct:36,dir:-1},{l:"Breakout age",pct:30,dir:-1},
+    {l:"Draft age",pct:28,dir:-1},{l:"Final rec yards",pct:24,dir:1},
+    {l:"Dominator rating",pct:20,dir:1},{l:"Usage pass",pct:18,dir:1},
+    {l:"Dominator rec share",pct:16,dir:1},{l:"Conference tier",pct:14,dir:-1},
+    {l:"Receptions",pct:12,dir:1},{l:"YPR",pct:8,dir:1},
   ],
   TE:[
-    {label:"Draft Pick #",pct:26.4,dir:"Negative"},
-    {label:"College Yards",pct:20.5,dir:"Positive"},
-    {label:"College Receptions",pct:10.1,dir:"Negative"},
-    {label:"Broad Jump (in)",pct:7.7,dir:"Positive"},
-    {label:"Age at Draft",pct:7.3,dir:"Negative"},
-    {label:"Breakout Age",pct:5.5,dir:"Positive"},
-    {label:"College TDs",pct:5.5,dir:"Negative"},
-    {label:"Height (inches)",pct:5.4,dir:"Negative"},
-    {label:"Speed Score",pct:4.0,dir:"Positive"},
-    {label:"Weight (lbs)",pct:3.3,dir:"Positive"},
-    {label:"Vertical Jump (in)",pct:3.3,dir:"Positive"},
-    {label:"3-Cone Drill",pct:0.9,dir:"Negative"},
+    {l:"Draft pick #",pct:34,dir:-1},{l:"Rush TD rate",pct:38,dir:1},
+    {l:"Dominator rating",pct:28,dir:1},{l:"Draft age",pct:24,dir:-1},
+    {l:"Breakout age",pct:22,dir:-1},{l:"Forty yard",pct:20,dir:-1},
+    {l:"Usage pass",pct:18,dir:1},{l:"Rec yards",pct:16,dir:1},
+    {l:"Three cone",pct:12,dir:-1},{l:"Derived YPC",pct:10,dir:1},
   ],
 };
 
-const FORMATS={std:{rec:0,label:"Standard"},half:{rec:0.5,label:"Half PPR"},ppr:{rec:1.0,label:"PPR"}};
-let currentFormat="half";
+// Prospects data with all four lens scores
+const PROSPECTS = [
+  {name:"Fernando Mendoza",school:"Indiana",pos:"QB",pick:1,age:22.1,breakout:19.5,
+   scores:{yr1:{c:653,p:653},early:{c:580,p:548},peak:{c:745,p:653},career:{c:null,p:null}},
+   vorp:{yr1:148,early:130,peak:661,career:null},tier:"Elite",
+   college:{yds:3535,tds:41,rec:0},conf_tier:2,low_conf:false},
+  {name:"Ty Simpson",school:"Alabama",pos:"QB",pick:34,age:22.4,breakout:20.8,
+   scores:{yr1:{c:420,p:430},early:{c:480,p:471},peak:{c:595,p:471},career:{c:null,p:null}},
+   vorp:{yr1:90,early:80,peak:511,career:null},tier:"Starter",
+   college:{yds:3200,tds:28,rec:0},conf_tier:1,low_conf:false},
+  {name:"Garrett Nussmeier",school:"LSU",pos:"QB",pick:68,age:22.8,breakout:20.5,
+   scores:{yr1:{c:310,p:380},early:{c:420,p:474},peak:{c:579,p:548},career:{c:null,p:null}},
+   vorp:{yr1:60,early:70,peak:496,career:null},tier:"Starter",
+   college:{yds:3400,tds:32,rec:0},conf_tier:1,low_conf:false},
+  {name:"Carson Beck",school:"Miami",pos:"QB",pick:118,age:23.2,breakout:21.0,
+   scores:{yr1:{c:180,p:220},early:{c:300,p:380},peak:{c:423,p:537},career:{c:null,p:null}},
+   vorp:{yr1:20,early:40,peak:340,career:null},tier:"Viable",
+   college:{yds:3100,tds:24,rec:0},conf_tier:1,low_conf:false},
+  {name:"Drew Allar",school:"Penn State",pos:"QB",pick:140,age:23.1,breakout:21.2,
+   scores:{yr1:{c:120,p:180},early:{c:240,p:370},peak:{c:400,p:586},career:{c:null,p:null}},
+   vorp:{yr1:-2,early:22,peak:317,career:null},tier:"Viable",
+   college:{yds:2800,tds:22,rec:0},conf_tier:1,low_conf:false},
+  {name:"Cole Payton",school:"Incarnate Word",pos:"QB",pick:171,age:23.5,breakout:21.8,
+   scores:{yr1:{c:80,p:null},early:{c:150,p:null},peak:{c:225,p:272},career:{c:null,p:null}},
+   vorp:{yr1:-40,early:-20,peak:141,career:null},tier:"Bust",
+   college:{yds:2200,tds:18,rec:0},conf_tier:4,low_conf:true},
+  {name:"Jeremiyah Love",school:"Notre Dame",pos:"RB",pick:4,age:21.0,breakout:19.2,
+   scores:{yr1:{c:180,p:180},early:{c:380,p:310},peak:{c:531,p:355},career:{c:282,p:180}},
+   vorp:{yr1:90,early:120,peak:437,career:140},tier:"Elite",
+   college:{yds:1372,tds:21,rec:27},conf_tier:1,low_conf:false},
+  {name:"Jadarian Price",school:"Texas",pos:"RB",pick:48,age:21.5,breakout:20.1,
+   scores:{yr1:{c:160,p:160},early:{c:310,p:290},peak:{c:486,p:306},career:{c:220,p:140}},
+   vorp:{yr1:70,early:90,peak:391,career:110},tier:"Starter",
+   college:{yds:1102,tds:14,rec:22},conf_tier:1,low_conf:false},
+  {name:"Emmett Johnson",school:"Oregon",pos:"RB",pick:58,age:22.2,breakout:20.8,
+   scores:{yr1:{c:150,p:150},early:{c:290,p:280},peak:{c:435,p:300},career:{c:200,p:130}},
+   vorp:{yr1:60,early:80,peak:340,career:90},tier:"Starter",
+   college:{yds:1044,tds:12,rec:38},conf_tier:1,low_conf:false},
+  {name:"Kaytron Allen",school:"Penn State",pos:"RB",pick:72,age:21.8,breakout:20.2,
+   scores:{yr1:{c:140,p:140},early:{c:270,p:260},peak:{c:412,p:314},career:{c:190,p:120}},
+   vorp:{yr1:50,early:70,peak:318,career:80},tier:"Starter",
+   college:{yds:980,tds:11,rec:24},conf_tier:1,low_conf:false},
+  {name:"Mike Washington Jr.",school:"Oklahoma State",pos:"RB",pick:75,age:22.0,breakout:20.5,
+   scores:{yr1:{c:135,p:135},early:{c:260,p:255},peak:{c:385,p:322},career:{c:180,p:115}},
+   vorp:{yr1:45,early:65,peak:291,career:72},tier:"Flex",
+   college:{yds:1189,tds:15,rec:18},conf_tier:2,low_conf:false},
+  {name:"Nicholas Singleton",school:"Penn State",pos:"RB",pick:85,age:22.3,breakout:20.0,
+   scores:{yr1:{c:125,p:125},early:{c:245,p:240},peak:{c:304,p:312},career:{c:170,p:110}},
+   vorp:{yr1:35,early:55,peak:210,career:60},tier:"Flex",
+   college:{yds:968,tds:11,rec:25},conf_tier:1,low_conf:false},
+  {name:"Jonah Coleman",school:"Washington",pos:"RB",pick:110,age:22.5,breakout:20.5,
+   scores:{yr1:{c:100,p:100},early:{c:200,p:195},peak:{c:235,p:289},career:{c:140,p:95}},
+   vorp:{yr1:10,early:30,peak:141,career:30},tier:"Viable",
+   college:{yds:880,tds:9,rec:35},conf_tier:1,low_conf:false},
+  {name:"Seth McGowan",school:"App State",pos:"RB",pick:133,age:23.0,breakout:21.2,
+   scores:{yr1:{c:85,p:85},early:{c:175,p:170},peak:{c:199,p:293},career:{c:120,p:85}},
+   vorp:{yr1:0,early:15,peak:105,career:15},tier:"Viable",
+   college:{yds:760,tds:8,rec:28},conf_tier:2,low_conf:false},
+  {name:"Demond Claiborne",school:"South Florida",pos:"RB",pick:174,age:22.8,breakout:20.8,
+   scores:{yr1:{c:60,p:60},early:{c:130,p:125},peak:{c:223,p:300},career:{c:95,p:70}},
+   vorp:{yr1:-25,early:-10,peak:129,career:0},tier:"Developmental",
+   college:{yds:680,tds:7,rec:22},conf_tier:2,low_conf:false},
+  {name:"Jordyn Tyson",school:"Arizona State",pos:"WR",pick:14,age:21.8,breakout:19.8,
+   scores:{yr1:{c:110,p:100},early:{c:240,p:200},peak:{c:463,p:375},career:{c:180,p:null}},
+   vorp:{yr1:60,early:70,peak:381,career:90},tier:"Starter",
+   college:{yds:987,tds:11,rec:62},conf_tier:1,low_conf:false},
+  {name:"Carnell Tate",school:"Ohio State",pos:"WR",pick:8,age:21.2,breakout:19.2,
+   scores:{yr1:{c:120,p:100},early:{c:250,p:195},peak:{c:442,p:340},career:{c:190,p:null}},
+   vorp:{yr1:70,early:80,peak:361,career:100},tier:"Starter",
+   college:{yds:875,tds:9,rec:51},conf_tier:1,low_conf:false},
+  {name:"Makai Lemon",school:"USC",pos:"WR",pick:19,age:20.9,breakout:19.0,
+   scores:{yr1:{c:115,p:100},early:{c:240,p:195},peak:{c:431,p:365},career:{c:185,p:null}},
+   vorp:{yr1:65,early:75,peak:349,career:95},tier:"Starter",
+   college:{yds:1156,tds:11,rec:79},conf_tier:1,low_conf:false},
+  {name:"Denzel Boston",school:"Nevada",pos:"WR",pick:26,age:22.1,breakout:20.2,
+   scores:{yr1:{c:105,p:90},early:{c:220,p:180},peak:{c:415,p:361},career:{c:175,p:null}},
+   vorp:{yr1:55,early:65,peak:334,career:85},tier:"Flex",
+   college:{yds:914,tds:9,rec:58},conf_tier:2,low_conf:false},
+  {name:"Zachariah Branch",school:"USC",pos:"WR",pick:50,age:21.5,breakout:18.9,
+   scores:{yr1:{c:90,p:85},early:{c:190,p:165},peak:{c:363,p:340},career:{c:160,p:null}},
+   vorp:{yr1:40,early:50,peak:281,career:70},tier:"Flex",
+   college:{yds:712,tds:7,rec:52},conf_tier:1,low_conf:false},
+  {name:"Omar Cooper Jr.",school:"Indiana",pos:"WR",pick:37,age:22.0,breakout:19.9,
+   scores:{yr1:{c:95,p:80},early:{c:200,p:160},peak:{c:340,p:274},career:{c:165,p:null}},
+   vorp:{yr1:45,early:55,peak:259,career:75},tier:"Flex",
+   college:{yds:822,tds:8,rec:65},conf_tier:1,low_conf:false},
+  {name:"Kevin Concepcion",school:"Iowa State",pos:"WR",pick:85,age:21.5,breakout:19.5,
+   scores:{yr1:{c:80,p:75},early:{c:170,p:150},peak:{c:313,p:371},career:{c:145,p:null}},
+   vorp:{yr1:30,early:40,peak:231,career:55},tier:"Viable",
+   college:{yds:880,tds:7,rec:58},conf_tier:1,low_conf:false},
+  {name:"Germie Bernard",school:"Michigan",pos:"WR",pick:62,age:22.2,breakout:20.5,
+   scores:{yr1:{c:85,p:70},early:{c:175,p:145},peak:{c:377,p:319},career:{c:150,p:null}},
+   vorp:{yr1:35,early:45,peak:295,career:60},tier:"Viable",
+   college:{yds:680,tds:7,rec:44},conf_tier:1,low_conf:false},
+  {name:"Noah Thomas",school:"Middle Tennessee",pos:"WR",pick:72,age:22.6,breakout:21.0,
+   scores:{yr1:{c:75,p:65},early:{c:155,p:130},peak:{c:375,p:327},career:{c:140,p:null}},
+   vorp:{yr1:25,early:35,peak:294,career:50},tier:"Viable",
+   college:{yds:620,tds:6,rec:38},conf_tier:2,low_conf:false},
+  {name:"Chris Brazzell",school:"UT Arlington",pos:"WR",pick:42,age:22.4,breakout:20.8,
+   scores:{yr1:{c:88,p:72},early:{c:180,p:152},peak:{c:349,p:321},career:{c:155,p:null}},
+   vorp:{yr1:38,early:48,peak:267,career:65},tier:"Viable",
+   college:{yds:778,tds:8,rec:48},conf_tier:2,low_conf:false},
+  {name:"Eric Singleton Jr.",school:"Georgia Tech",pos:"WR",pick:88,age:22.3,breakout:20.2,
+   scores:{yr1:{c:72,p:62},early:{c:148,p:124},peak:{c:278,p:318},career:{c:132,p:null}},
+   vorp:{yr1:22,early:32,peak:196,career:42},tier:"Viable",
+   college:{yds:640,tds:6,rec:40},conf_tier:1,low_conf:false},
+  {name:"Deion Burks",school:"Purdue",pos:"WR",pick:98,age:22.2,breakout:20.2,
+   scores:{yr1:{c:68,p:58},early:{c:140,p:116},peak:{c:249,p:314},career:{c:125,p:null}},
+   vorp:{yr1:18,early:28,peak:168,career:35},tier:"Viable",
+   college:{yds:780,tds:7,rec:52},conf_tier:1,low_conf:false},
+  {name:"Brenen Thompson",school:"Kansas State",pos:"WR",pick:126,age:22.0,breakout:19.8,
+   scores:{yr1:{c:60,p:55},early:{c:120,p:100},peak:{c:229,p:350},career:{c:110,p:null}},
+   vorp:{yr1:10,early:20,peak:147,career:20},tier:"Developmental",
+   college:{yds:1054,tds:8,rec:68},conf_tier:1,low_conf:false},
+  {name:"Skyler Bell",school:"UCF",pos:"WR",pick:114,age:22.1,breakout:20.0,
+   scores:{yr1:{c:62,p:52},early:{c:128,p:106},peak:{c:222,p:305},career:{c:112,p:null}},
+   vorp:{yr1:12,early:22,peak:141,career:22},tier:"Developmental",
+   college:{yds:590,tds:6,rec:42},conf_tier:2,low_conf:false},
+  {name:"Kevin Coleman Jr.",school:"Missouri",pos:"WR",pick:160,age:22.0,breakout:19.8,
+   scores:{yr1:{c:48,p:40},early:{c:98,p:82},peak:{c:175,p:320},career:{c:95,p:null}},
+   vorp:{yr1:-2,early:8,peak:93,career:5},tier:"Developmental",
+   college:{yds:720,tds:6,rec:48},conf_tier:1,low_conf:false},
+  {name:"Josh Cameron",school:"Maryland",pos:"WR",pick:129,age:22.5,breakout:20.5,
+   scores:{yr1:{c:55,p:45},early:{c:112,p:94},peak:{c:210,p:327},career:{c:100,p:null}},
+   vorp:{yr1:5,early:15,peak:129,career:10},tier:"Developmental",
+   college:{yds:560,tds:5,rec:36},conf_tier:1,low_conf:false},
+  {name:"Eric McAlister",school:"Ole Miss",pos:"WR",pick:169,age:22.4,breakout:20.5,
+   scores:{yr1:{c:40,p:32},early:{c:82,p:68},peak:{c:158,p:319},career:{c:88,p:null}},
+   vorp:{yr1:-10,early:2,peak:76,career:0},tier:"Bust",
+   college:{yds:580,tds:5,rec:38},conf_tier:1,low_conf:false},
+  {name:"Kenyon Sadiq",school:"Texas",pos:"TE",pick:10,age:21.4,breakout:19.8,
+   scores:{yr1:{c:68,p:62},early:{c:148,p:130},peak:{c:298,p:258},career:{c:180,p:155}},
+   vorp:{yr1:38,early:55,peak:236,career:98},tier:"Flex",
+   college:{yds:560,tds:8,rec:51},conf_tier:1,low_conf:false},
+  {name:"Eli Stowers",school:"Texas A&M",pos:"TE",pick:45,age:22.2,breakout:20.5,
+   scores:{yr1:{c:60,p:54},early:{c:130,p:112},peak:{c:273,p:238},career:{c:160,p:135}},
+   vorp:{yr1:30,early:45,peak:211,career:78},tier:"Viable",
+   college:{yds:480,tds:7,rec:44},conf_tier:1,low_conf:false},
+  {name:"Eli Raridon",school:"Nebraska",pos:"TE",pick:58,age:21.9,breakout:20.2,
+   scores:{yr1:{c:55,p:48},early:{c:118,p:100},peak:{c:246,p:200},career:{c:148,p:122}},
+   vorp:{yr1:25,early:38,peak:184,career:66},tier:"Viable",
+   college:{yds:398,tds:5,rec:35},conf_tier:1,low_conf:false},
+  {name:"Max Klare",school:"Ohio State",pos:"TE",pick:70,age:22.8,breakout:21.2,
+   scores:{yr1:{c:48,p:40},early:{c:104,p:88},peak:{c:222,p:175},career:{c:135,p:110}},
+   vorp:{yr1:18,early:28,peak:160,career:53},tier:"Viable",
+   college:{yds:420,tds:5,rec:38},conf_tier:1,low_conf:false},
+  {name:"Justin Joly",school:"Florida Atlantic",pos:"TE",pick:111,age:22.8,breakout:21.0,
+   scores:{yr1:{c:38,p:32},early:{c:82,p:70},peak:{c:178,p:204},career:{c:112,p:90}},
+   vorp:{yr1:8,early:18,peak:116,career:30},tier:"Viable",
+   college:{yds:524,tds:7,rec:44},conf_tier:2,low_conf:false},
+  {name:"Sam Roush",school:"Notre Dame",pos:"TE",pick:107,age:23.0,breakout:21.5,
+   scores:{yr1:{c:35,p:28},early:{c:76,p:62},peak:{c:165,p:161},career:{c:105,p:82}},
+   vorp:{yr1:5,early:12,peak:103,career:23},tier:"Developmental",
+   college:{yds:360,tds:4,rec:32},conf_tier:1,low_conf:false},
+  {name:"Michael Trigg",school:"Florida",pos:"TE",pick:139,age:22.8,breakout:20.5,
+   scores:{yr1:{c:30,p:25},early:{c:64,p:55},peak:{c:152,p:193},career:{c:98,p:76}},
+   vorp:{yr1:0,early:5,peak:90,career:16},tier:"Developmental",
+   college:{yds:440,tds:5,rec:36},conf_tier:1,low_conf:false},
+  {name:"Dallen Bentley",school:"Southern Miss",pos:"TE",pick:166,age:22.5,breakout:21.0,
+   scores:{yr1:{c:24,p:20},early:{c:52,p:44},peak:{c:132,p:200},career:{c:85,p:65}},
+   vorp:{yr1:-8,early:-2,peak:70,career:3},tier:"Bust",
+   college:{yds:340,tds:4,rec:30},conf_tier:2,low_conf:false},
+  {name:"Josh Cuevas",school:"Florida International",pos:"TE",pick:167,age:23.2,breakout:21.8,
+   scores:{yr1:{c:20,p:16},early:{c:44,p:36},peak:{c:120,p:184},career:{c:78,p:58}},
+   vorp:{yr1:-12,early:-6,peak:58,career:-4},tier:"Bust",
+   college:{yds:320,tds:4,rec:28},conf_tier:2,low_conf:false},
+];
 
-function injuryOn(){return document.getElementById("injury-toggle")?.checked||false;}
-function syncInjury(){
-  const v=injuryOn();
-  document.querySelectorAll("[id^='injury-toggle']").forEach(el=>{el.checked=v;});
-}
+const HISTORICAL = [
+  {name:"Josh Allen",pos:"QB",year:2018,pick:7,breakout:20.5,seasons:5,actual:342,pick_pred:195,low_conf:false},
+  {name:"Patrick Mahomes",pos:"QB",year:2017,pick:10,breakout:18.5,seasons:5,actual:291,pick_pred:188,low_conf:false},
+  {name:"Justin Herbert",pos:"QB",year:2020,pick:6,breakout:18.5,seasons:5,actual:301,pick_pred:182,low_conf:false},
+  {name:"Lamar Jackson",pos:"QB",year:2018,pick:32,breakout:18.5,seasons:5,actual:281,pick_pred:168,low_conf:false,inj:22},
+  {name:"Joe Burrow",pos:"QB",year:2020,pick:1,breakout:21.5,seasons:5,actual:276,pick_pred:192,low_conf:false,inj:26},
+  {name:"Jalen Hurts",pos:"QB",year:2020,pick:53,breakout:18.5,seasons:5,actual:299,pick_pred:155,low_conf:false},
+  {name:"Dak Prescott",pos:"QB",year:2016,pick:135,breakout:20.5,seasons:5,actual:267,pick_pred:112,low_conf:false,inj:20},
+  {name:"Kyler Murray",pos:"QB",year:2019,pick:1,breakout:21.5,seasons:5,actual:262,pick_pred:185,low_conf:false,inj:21},
+  {name:"CJ Stroud",pos:"QB",year:2023,pick:2,breakout:19.5,seasons:2,actual:182,pick_pred:175,low_conf:false},
+  {name:"Jayden Daniels",pos:"QB",year:2024,pick:2,breakout:18.5,seasons:1,actual:189,pick_pred:180,low_conf:false},
+  {name:"Alvin Kamara",pos:"RB",year:2017,pick:67,breakout:20.5,seasons:5,actual:268,pick_pred:128,low_conf:false},
+  {name:"Christian McCaffrey",pos:"RB",year:2017,pick:8,breakout:19.5,seasons:5,actual:225,pick_pred:154,low_conf:false,inj:28},
+  {name:"Ezekiel Elliott",pos:"RB",year:2016,pick:4,breakout:19.5,seasons:5,actual:255,pick_pred:156,low_conf:false},
+  {name:"Saquon Barkley",pos:"RB",year:2018,pick:2,breakout:19.5,seasons:5,actual:191,pick_pred:177,low_conf:false,inj:26},
+  {name:"Jonathan Taylor",pos:"RB",year:2020,pick:41,breakout:18.5,seasons:5,actual:221,pick_pred:152,low_conf:false,inj:14},
+  {name:"Jahmyr Gibbs",pos:"RB",year:2023,pick:12,breakout:19.0,seasons:2,actual:273,pick_pred:146,low_conf:false},
+  {name:"Bijan Robinson",pos:"RB",year:2023,pick:8,breakout:19.0,seasons:2,actual:264,pick_pred:153,low_conf:false},
+  {name:"Derrick Henry",pos:"RB",year:2016,pick:45,breakout:20.0,seasons:5,actual:206,pick_pred:135,low_conf:false},
+  {name:"Aaron Jones",pos:"RB",year:2017,pick:182,breakout:19.5,seasons:5,actual:195,pick_pred:88,low_conf:false},
+  {name:"Tony Pollard",pos:"RB",year:2019,pick:128,breakout:20.0,seasons:5,actual:182,pick_pred:95,low_conf:false},
+  {name:"Justin Jefferson",pos:"WR",year:2020,pick:22,breakout:20.0,seasons:5,actual:254,pick_pred:118,low_conf:false},
+  {name:"CeeDee Lamb",pos:"WR",year:2020,pick:17,breakout:19.5,seasons:5,actual:239,pick_pred:122,low_conf:false},
+  {name:"Tyreek Hill",pos:"WR",year:2016,pick:165,breakout:19.5,seasons:5,actual:243,pick_pred:108,low_conf:false},
+  {name:"Davante Adams",pos:"WR",year:2014,pick:53,breakout:20.5,seasons:5,actual:227,pick_pred:112,low_conf:false},
+  {name:"Ja'Marr Chase",pos:"WR",year:2021,pick:5,breakout:19.0,seasons:4,actual:248,pick_pred:131,low_conf:false},
+  {name:"Cooper Kupp",pos:"WR",year:2017,pick:69,breakout:19.5,seasons:5,actual:236,pick_pred:112,low_conf:false,inj:20},
+  {name:"A.J. Brown",pos:"WR",year:2019,pick:51,breakout:20.0,seasons:5,actual:223,pick_pred:116,low_conf:false},
+  {name:"DeAndre Hopkins",pos:"WR",year:2013,pick:27,breakout:18.0,seasons:5,actual:228,pick_pred:120,low_conf:false},
+  {name:"Stefon Diggs",pos:"WR",year:2015,pick:146,breakout:19.5,seasons:5,actual:228,pick_pred:95,low_conf:false},
+  {name:"Marvin Harrison Jr.",pos:"WR",year:2024,pick:4,breakout:19.5,seasons:1,actual:188,pick_pred:128,low_conf:false},
+  {name:"Travis Kelce",pos:"TE",year:2013,pick:63,breakout:20.5,seasons:5,actual:284,pick_pred:88,low_conf:false},
+  {name:"Mark Andrews",pos:"TE",year:2018,pick:86,breakout:20.5,seasons:5,actual:226,pick_pred:72,low_conf:false,inj:14},
+  {name:"Brock Bowers",pos:"TE",year:2024,pick:13,breakout:19.0,seasons:1,actual:198,pick_pred:88,low_conf:false},
+  {name:"T.J. Hockenson",pos:"TE",year:2019,pick:8,breakout:20.0,seasons:5,actual:193,pick_pred:84,low_conf:false,inj:18},
+  {name:"Trey McBride",pos:"TE",year:2022,pick:55,breakout:21.0,seasons:3,actual:183,pick_pred:76,low_conf:false},
+  {name:"Kyle Pitts",pos:"TE",year:2021,pick:4,breakout:19.5,seasons:4,actual:168,pick_pred:92,low_conf:false},
+  {name:"Sam LaPorta",pos:"TE",year:2023,pick:34,breakout:20.5,seasons:2,actual:158,pick_pred:74,low_conf:false},
+];
 
-function scorePlayer(p,fmt){
-  const r=FORMATS[fmt].rec;
-  return Math.round((p.pass_td||0)*4+(p.pass_yds||0)*0.04+(p.pass_int||0)*-2+
-    (p.rush_td||0)*6+(p.rush_yds||0)*0.1+(p.rec_td||0)*6+(p.rec_yds||0)*0.1+(p.rec||0)*r);
-}
-function playerAvg(p,fmt){
-  if(injuryOn()&&p.injuryRisk&&p.inj_adj_avg){
-    const h=scorePlayer(p,"half"),f=scorePlayer(p,fmt);
-    return h>0?Math.round(p.inj_adj_avg*(f/h)):p.inj_adj_avg;
-  }
-  if(p.actual_half){
-    const h=scorePlayer(p,"half"),f=scorePlayer(p,fmt);
-    return h>0?Math.round(p.actual_half*(f/h)):p.actual_half;
-  }
-  return scorePlayer(p,fmt);
-}
-function prospectScore(p,fmt){
-  const h=scorePlayer(p,"half"),f=scorePlayer(p,fmt);
-  if(!h)return p.predicted||0;
-  return Math.round((p.predicted||0)*(f/h));
-}
-
-function setFormat(fmt,btn){
-  currentFormat=fmt;
-  document.querySelectorAll(".format-btn").forEach(b=>b.classList.toggle("active",b.textContent===FORMATS[fmt].label));
-  document.getElementById("format-display").textContent=FORMATS[fmt].label;
-  document.getElementById("pos-chart-title").textContent=`Avg fantasy points/season by position (${FORMATS[fmt].label})`;
-  ["base-col-hdr","search-ppr-col"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=FORMATS[fmt].label;});
-  document.getElementById("adj-col-hdr").textContent=`Adj. ${FORMATS[fmt].label}`;
-  renderAll();
-}
-
-function renderAll(){renderPositionPerformers();renderProspects();renderDialRankings();renderSearch();renderCompare();renderDashProspects();}
-
-let posChart;
-function renderPositionPerformers(){
-  ["QB","RB","WR","TE"].forEach(pos=>{
-    const POS_COLORS={QB:"#1A3A8F",RB:"#1A6634",WR:"#8B4500",TE:"#5B0085"};
-    const players=HISTORICAL.filter(p=>p.pos===pos&&p.actual_half)
-      .map(p=>({...p,ds:playerAvg(p,currentFormat)}))
-      .sort((a,b)=>b.ds-a.ds);
-    const avg=players.length?Math.round(players.reduce((s,p)=>s+p.ds,0)/players.length):0;
-    document.getElementById(`${pos.toLowerCase()}-avg`).textContent=`· Avg: ${avg}`;
-    const body=document.getElementById(`top-${pos}-body`);body.innerHTML="";
-    players.slice(0,6).forEach((p,i)=>{
-      const adjNote=injuryOn()&&p.injuryRisk&&p.inj_adj_avg?`<span style="font-size:9px;color:#1A6634"> *adj</span>`:"";
-      const injTag=p.injuryRisk?`<span class="inj-badge">${p.gamesMissed}G</span>`:"";
-      body.innerHTML+=`<tr><td class="rank-num">${i+1}</td>
-        <td style="font-weight:500">${p.name}</td>
-        <td>${p.year}</td><td>${p.pick||"UDFA"}</td>
-        <td style="font-weight:500">${p.ds}${adjNote}</td>
-        <td>${injTag}</td><td>${compBadge(p.seasons)}</td></tr>`;
-    });
-  });
-  if(posChart){
-    posChart.data.datasets[0].data=["QB","RB","WR","TE"].map(pos=>{
-      const pl=HISTORICAL.filter(p=>p.pos===pos&&p.actual_half);
-      return pl.length?Math.round(pl.reduce((s,p)=>s+playerAvg(p,currentFormat),0)/pl.length):0;
-    });
-    posChart.update();
-  }
-}
-
-const DIALS={dominator:5,draftcapital:5,breakoutage:5,collegeproduction:5};
-const DIAL_LABELS={dominator:"Dominator",draftcapital:"Draft capital",breakoutage:"Breakout age",collegeproduction:"College production"};
-const DIAL_FEATURES={
-  dominator:p=>p.dominator||0,
-  draftcapital:p=>p.projPick?Math.max(0,(260-p.projPick)/260):0.5,
-  breakoutage:p=>p.breakout?Math.max(0,(22-p.breakout)/4):0,
-  collegeproduction:p=>{const y=(p.collegeYds||0)/1500,t=(p.collegeTds||0)/20,r=(p.collegeRec||0)/80;return Math.min(1,(y+t+r)/3);},
+// Replacement levels by lens/position
+const REPL = {
+  yr1:{QB:52,RB:33,WR:28,TE:16},
+  early:{QB:58,RB:79,WR:68,TE:49},
+  peak:{QB:84,RB:95,WR:82,TE:62},
+  career:{QB:107,RB:107,WR:84,TE:68},
 };
-function dialMult(v){if(v<=1)return 0;if(v<=5)return(v-1)/4;return 1+(v-5)/5;}
-function dialColor(v){if(v<=2)return"#C02020";if(v<=4)return"#B8762A";if(v===5)return"#1A3A8F";if(v<=7)return"#1A6634";return"#0C5460";}
-function adjProspectPPR(p){
-  const base=prospectScore(p,currentFormat);let adj=0;
-  for(const[k,fn]of Object.entries(DIAL_FEATURES)){adj+=(dialMult(DIALS[k])-1.0)*fn(p)*base*0.15;}
-  return Math.max(0,Math.round(base+adj));
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let lens = {dash:'peak', pros:'peak', cmp:'peak'};
+let mode = {dash:'combined', pros:'combined', cmp:'combined'};
+let dashPos = 'ALL', prosPos = 'ALL';
+let dialPos = 'QB', weightsPos = 'QB';
+let dashSec = 'prospects';
+let posChartInst, roundChartInst;
+
+const DIALS = {dominator:5, draftcapital:5, breakoutage:5, production:5};
+const DIAL_DEFS = [
+  {k:'dominator', label:'Dominator Rating', desc:'% of team yards+TDs. Controls for team quality and opportunity share.'},
+  {k:'draftcapital', label:'Draft Capital', desc:'Pick number and round. High capital = more opportunity and organizational investment.'},
+  {k:'breakoutage', label:'Breakout Age', desc:'Age at first season of meaningful production. Earlier breakouts signal higher ceilings.'},
+  {k:'production', label:'College Volume', desc:'Raw yards and TDs in final season. Absolute volume regardless of team context.'},
+];
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function getScore(p, l, m) {
+  const s = p.scores[l];
+  if (!s) return null;
+  const v = m === 'combined' ? s.c : (s.p != null ? s.p : null);
+  // Don't fall back for pure talent — null means no pure score available
+  if (v == null && m === 'pure') return null;
+  return (v == null || (p.low_conf && m === 'pure')) ? null : v;
 }
-function updateDial(k,v){
-  v=parseInt(v);DIALS[k]=v;
-  document.getElementById(`dv-${k}`).textContent=v;
-  document.getElementById(`dv-${k}`).style.color=dialColor(v);
-  const f=document.getElementById(`df-${k}`);
-  f.style.width=((v-1)/9*100).toFixed(0)+"%";f.style.background=dialColor(v);
-  renderProspects();renderDialRankings();updatePrefSummary();
+function getVORP(p, l) { return p.vorp[l]; }
+function getTier(p, l, m) {
+  const s = getScore(p, l, m);
+  if (s == null) return 'N/A';
+  // Tiers based on absolute score relative to replacement level
+  // XGBoost scores: peak window ranges ~150-750 for prospects
+  const repl = REPL[l][p.pos];
+  const v = s - repl;
+  if (v >= 400) return 'Elite';
+  if (v >= 260) return 'Starter';
+  if (v >= 150) return 'Flex';
+  if (v >= 60) return 'Viable';
+  if (v >= 0) return 'Developmental';
+  return 'Bust';
 }
-function resetDials(){for(const k of Object.keys(DIALS)){DIALS[k]=5;document.getElementById(`dial-${k}`).value=5;updateDial(k,5);}}
-function updatePrefSummary(){
-  const parts=Object.entries(DIALS).map(([k,v])=>{
-    const l=DIAL_LABELS[k];
-    if(v===5)return`${l}: <b>5</b>`;
-    if(v<5)return`${l}: <b style="color:#C02020">${v}</b>`;
-    return`${l}: <b style="color:#1A6634">${v}</b>`;
+function tierClass(t) {
+  return 'tier-' + (t === 'Bust Risk' ? 'Bust' : t.replace(' ',''));
+}
+function posBadge(pos) {
+  return `<span class="badge badge-${pos}">${pos}</span>`;
+}
+function vorpHtml(v) {
+  if (v == null) return '<span class="vorp-neu">—</span>';
+  const cls = v > 0 ? 'vorp-pos' : v < 0 ? 'vorp-neg' : 'vorp-neu';
+  return `<span class="${cls}">${v > 0 ? '+' : ''}${v}</span>`;
+}
+function dots(n) {
+  const max = Math.min(n || 0, 5);
+  const c = max >= 5 ? '#065F46' : max >= 3 ? '#1E40AF' : max >= 1 ? '#92400E' : '#D1D5DB';
+  let s = '';
+  for (let i = 0; i < 5; i++) s += `<span class="dot" style="background:${i<max?c:'#E5E7EB'}"></span>`;
+  return `<span class="dots">${s}</span>`;
+}
+function lensInfo(l, ctx) {
+  const el = document.getElementById(ctx + '-lens-info');
+  if (el) el.textContent = LENS_INFO[l];
+}
+function syncLensDisplay() {
+  const el = document.getElementById('dash-lens-display');
+  if (el) el.textContent = LENS_LABELS[lens.dash];
+}
+
+// Dial adjustment
+function dialMult(v) { return v <= 1 ? 0 : v <= 5 ? (v-1)/4 : 1 + (v-5)/5; }
+function dialColor(v) { return v <= 2 ? '#9B1C1C' : v <= 4 ? '#B45309' : v === 5 ? '#1E40AF' : v <= 7 ? '#1B6B3A' : '#065F46'; }
+const DIAL_FNS = {
+  dominator: p => {
+    const dr = p.college && p.pos !== 'QB' ? (p.college.yds / 1500) : 0;
+    return Math.min(1, dr);
+  },
+  draftcapital: p => p.pick ? Math.max(0, (262 - p.pick) / 262) : 0.5,
+  breakoutage: p => p.breakout ? Math.max(0, (22 - p.breakout) / 4) : 0,
+  production: p => {
+    if (!p.college) return 0;
+    const y = (p.college.yds || 0) / 1500;
+    const t = (p.college.tds || 0) / 20;
+    return Math.min(1, (y + t) / 2);
+  },
+};
+function adjScore(p, l, m) {
+  const base = getScore(p, l, m);
+  if (base == null) return null;
+  let adj = 0;
+  for (const [k, fn] of Object.entries(DIAL_FNS)) {
+    adj += (dialMult(DIALS[k]) - 1.0) * fn(p) * base * 0.14;
+  }
+  return Math.max(0, Math.round(base + adj));
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+function setLens(l, btn, ctx) {
+  lens[ctx] = l;
+  btn.closest('.seg').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active','green'));
+  btn.classList.add('active', 'green');
+  lensInfo(l, ctx);
+  if (ctx === 'dash') { syncLensDisplay(); renderDash(); }
+  if (ctx === 'pros') renderPros();
+  if (ctx === 'cmp') renderCompare();
+}
+function setMode(m, btn, ctx) {
+  mode[ctx] = m;
+  btn.closest('.seg').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (ctx === 'dash') renderDash();
+  if (ctx === 'pros') renderPros();
+  if (ctx === 'cmp') renderCompare();
+}
+function showDashSec(sec, btn) {
+  dashSec = sec;
+  btn.closest('.seg').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('dash-sec-prospects').style.display = sec === 'prospects' ? '' : 'none';
+  document.getElementById('dash-sec-historical').style.display = sec === 'historical' ? '' : 'none';
+  if (sec === 'historical') renderHistorical();
+}
+function filterDash(pos, btn) {
+  dashPos = pos;
+  document.querySelectorAll('#dash-pos-tabs .pos-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDash();
+}
+function filterPros(pos, btn) {
+  prosPos = pos;
+  document.querySelectorAll('#tab-prospects .pos-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPros();
+}
+
+// ── Render Dashboard ───────────────────────────────────────────────────────────
+function renderDash() {
+  const l = lens.dash, m = mode.dash;
+  document.getElementById('dash-score-hdr').textContent = `Score (${LENS_LABELS[l]})`;
+  const data = (dashPos === 'ALL' ? PROSPECTS : PROSPECTS.filter(p => p.pos === dashPos))
+    .map(p => ({ ...p, s: getScore(p, l, m), v: getVORP(p, l) }))
+    .filter(p => p.s != null)
+    .sort((a, b) => b.s - a.s);
+  const tbody = document.getElementById('dash-tbody');
+  tbody.innerHTML = '';
+  data.forEach((p, i) => {
+    const tier = getTier(p, l, m);
+    tbody.innerHTML += `<tr>
+      <td class="rank-num">${i + 1}</td>
+      <td style="font-weight:600">${p.name}${p.low_conf ? ' <span class="badge conf-low">~</span>' : ''}</td>
+      <td style="color:var(--text2)">${p.school}</td>
+      <td>${posBadge(p.pos)}</td>
+      <td class="num">${p.pick || '—'}</td>
+      <td class="num">${p.age}</td>
+      <td class="num">${p.breakout || '—'}</td>
+      <td class="num" style="font-weight:600">${p.s}</td>
+      <td>${vorpHtml(p.v)}</td>
+      <td><span class="badge ${tierClass(tier)}">${tier}</span></td>
+      <td><button class="comp-btn" onclick="showComp('${p.name.replace(/'/g,"\\'")}')">Comp</button></td>
+    </tr>`;
   });
-  const injStr=injuryOn()?'<b style="color:#1A6634">On</b>':"Off";
-  document.getElementById("pref-summary").innerHTML=`${parts.join(" &nbsp;&middot;&nbsp; ")} &nbsp;&middot;&nbsp; Format: <b>${FORMATS[currentFormat].label}</b> &nbsp;&middot;&nbsp; Injury: ${injStr}`;
 }
 
-function showTab(id,btn){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
-  document.getElementById("tab-"+id).classList.add("active");btn.classList.add("active");
-}
-function getTier(p){
-  if(p>=180)return{label:"Elite",cls:"tier-elite"};if(p>=120)return{label:"Strong",cls:"tier-strong"};
-  if(p>=80)return{label:"Upside",cls:"tier-upside"};return{label:"Dev",cls:"tier-dev"};
-}
-function posBadge(pos){return`<span class="badge badge-${pos}">${pos}</span>`;}
-function compBadge(s){
-  const n=Math.min(s,5),c=n>=5?"#155724":n>=3?"#0C5460":n>=1?"#856404":"#aaa";
-  let d="";for(let i=0;i<5;i++)d+=`<span class="dot" style="background:${i<n?c:"#ddd"}"></span>`;
-  return`<span style="font-size:10px;color:${c}">${n}/5 </span><span class="comp-dots">${d}</span>`;
+// ── Render Prospects ───────────────────────────────────────────────────────────
+function renderPros() {
+  const l = lens.pros, m = mode.pros;
+  const data = (prosPos === 'ALL' ? PROSPECTS : PROSPECTS.filter(p => p.pos === prosPos))
+    .map(p => ({ ...p, base: getScore(p, l, m), adj: adjScore(p, l, m), v: getVORP(p, l) }))
+    .filter(p => p.base != null)
+    .sort((a, b) => b.adj - a.adj);
+  const tbody = document.getElementById('pros-tbody');
+  tbody.innerHTML = '';
+  data.forEach((p, i) => {
+    const tier = getTier(p, l, m);
+    const diff = p.adj - p.base;
+    const ds = diff === 0 ? '' : diff > 0
+      ? `<span style="color:var(--accent);font-size:10px"> +${diff}</span>`
+      : `<span style="color:var(--danger);font-size:10px"> ${diff}</span>`;
+    tbody.innerHTML += `<tr>
+      <td class="rank-num">${i + 1}</td>
+      <td style="font-weight:600">${p.name}${p.low_conf ? ' <span class="badge conf-low">~</span>' : ''}</td>
+      <td style="color:var(--text2)">${p.school}</td>
+      <td>${posBadge(p.pos)}</td>
+      <td class="num">${p.pick || '—'}</td>
+      <td class="num">${p.age}</td>
+      <td class="num">${p.breakout || '—'}</td>
+      <td class="num" style="color:var(--text3)">${p.base}</td>
+      <td class="num" style="font-weight:600">${p.adj}${ds}</td>
+      <td>${vorpHtml(p.v)}</td>
+      <td><span class="badge ${tierClass(tier)}">${tier}</span></td>
+    </tr>`;
+  });
+  updatePrefBar();
 }
 
-function initCharts(){
-  posChart=new Chart(document.getElementById("posChart"),{type:"bar",
-    data:{labels:["QB","RB","WR","TE"],datasets:[{data:[260,198,210,168],
-      backgroundColor:["rgba(26,58,143,.75)","rgba(26,102,52,.75)","rgba(139,69,0,.75)","rgba(91,0,133,.75)"],
-      borderRadius:4,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{y:{beginAtZero:true,grid:{color:"rgba(0,0,0,.06)"},ticks:{color:"#888",font:{size:11}}},
-        x:{grid:{display:false},ticks:{color:"#888",font:{size:11}}}}}});
-  new Chart(document.getElementById("roundChart"),{type:"bar",
-    data:{labels:["R1","R2","R3","R4","R5","R6","R7"],
-      datasets:[{data:[64,40,24,14,9,5,3],backgroundColor:"rgba(48,96,192,.65)",borderRadius:4,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%",color:"#888",font:{size:11}},
-        grid:{color:"rgba(0,0,0,.06)"}},x:{grid:{display:false},ticks:{color:"#888",font:{size:11}}}}}});
+function updatePrefBar() {
+  const parts = Object.entries(DIALS).map(([k, v]) => {
+    const def = DIAL_DEFS.find(d => d.k === k);
+    const col = dialColor(v);
+    return `${def.label}: <b style="color:${col}">${v}</b>`;
+  });
+  document.getElementById('pref-bar').innerHTML = parts.join(' &nbsp;·&nbsp; ');
 }
 
-let prospectFilter="ALL";
-function filterProspects(pos,btn){
-  prospectFilter=pos;
-  document.querySelectorAll("#tab-prospects .pos-tab").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");renderProspects();
+// ── Historical leaders ─────────────────────────────────────────────────────────
+function renderHistorical() {
+  const grid = document.getElementById('performers-grid');
+  grid.innerHTML = '';
+  ['QB','RB','WR','TE'].forEach(pos => {
+    const players = HISTORICAL.filter(p => p.pos === pos && p.actual)
+      .sort((a, b) => b.actual - a.actual).slice(0, 6);
+    const avg = Math.round(players.reduce((s, p) => s + p.actual, 0) / players.length);
+    const col = POS_COLORS[pos];
+    let rows = players.map((p, i) => {
+      const inj = p.inj ? `<span class="inj">${p.inj}G</span>` : '';
+      return `<tr>
+        <td class="rank-num">${i+1}</td>
+        <td style="font-weight:600">${p.name}</td>
+        <td>${p.year}</td><td class="num">${p.pick}</td>
+        <td class="num" style="font-weight:600">${p.actual}${inj}</td>
+        <td>${dots(p.seasons)}</td>
+      </tr>`;
+    }).join('');
+    grid.innerHTML += `<div class="pos-card">
+      <div class="pos-card-header" style="background:${col}">
+        ${pos} · Top Performers <span style="opacity:.7;font-size:10px">avg ${avg}</span>
+      </div>
+      <table><thead><tr><th>#</th><th>Player</th><th>Year</th><th>Pick</th><th>Pts/Ssn</th><th>Data</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>`;
+  });
+  initCharts();
 }
-function renderProspects(){
-  const data=(prospectFilter==="ALL"?PROSPECTS:PROSPECTS.filter(p=>p.pos===prospectFilter))
-    .map(p=>({...p,base:prospectScore(p,currentFormat),adj:adjProspectPPR(p)}))
-    .sort((a,b)=>b.adj-a.adj);
-  const body=document.getElementById("prospect-body");body.innerHTML="";
-  data.forEach((p,i)=>{
-    const tier=getTier(p.adj),diff=p.adj-p.base;
-    const ds=diff===0?"":diff>0?`<span style="color:#1A6634;font-size:10px"> +${diff}</span>`:`<span style="color:#C02020;font-size:10px"> ${diff}</span>`;
-    body.innerHTML+=`<tr><td style="color:#aaa">${i+1}</td><td style="font-weight:500">${p.name}</td>
-      <td style="color:#888">${p.school}</td><td>${posBadge(p.pos)}</td>
-      <td>${p.projPick||"—"}</td><td>${p.age}</td><td>${p.breakout||"—"}</td>
-      <td style="color:#888">${p.rec||"—"}</td>
-      <td style="color:#aaa">${p.base}</td>
-      <td style="font-weight:500">${p.adj}${ds}</td>
-      <td><span class="badge ${tier.cls}">${tier.label}</span></td></tr>`;
+
+function initCharts() {
+  const opts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#9E9C97', font: { size: 10 } } },
+      x: { grid: { display: false }, ticks: { color: '#9E9C97', font: { size: 10 } } }
+    }
+  };
+  if (posChartInst) posChartInst.destroy();
+  posChartInst = new Chart(document.getElementById('posChart'), {
+    type: 'bar',
+    data: {
+      labels: ['QB','RB','WR','TE'],
+      datasets: [{ data: [278,218,224,205],
+        backgroundColor: ['rgba(139,69,0,.7)','rgba(27,107,58,.7)','rgba(30,64,175,.7)','rgba(109,40,217,.7)'],
+        borderRadius: 5, borderSkipped: false }]
+    }, options: opts
+  });
+  if (roundChartInst) roundChartInst.destroy();
+  roundChartInst = new Chart(document.getElementById('roundChart'), {
+    type: 'bar',
+    data: {
+      labels: ['R1','R2','R3','R4','R5','R6','R7'],
+      datasets: [{ data: [64,40,24,14,9,5,3],
+        backgroundColor: 'rgba(27,107,58,.65)', borderRadius: 5, borderSkipped: false }]
+    },
+    options: { ...opts, scales: { ...opts.scales, y: { ...opts.scales.y, max: 100,
+      ticks: { ...opts.scales.y.ticks, callback: v => v + '%' } } } }
   });
 }
 
-function initCompare(){
-  const all=[
-    ...PROSPECTS.map((p,i)=>({label:`${p.name} (${p.pos}, 2026)`,val:"p:"+i})),
-    ...HISTORICAL.map((p,i)=>({label:`${p.name} (${p.pos}, ${p.year})`,val:"h:"+i})),
+// ── Compare ────────────────────────────────────────────────────────────────────
+function initCompare() {
+  const all = [
+    ...PROSPECTS.map((p, i) => ({ label: `${p.name} (${p.pos}, 2026)`, val: 'p:' + i })),
+    ...HISTORICAL.map((p, i) => ({ label: `${p.name} (${p.pos}, ${p.year})`, val: 'h:' + i })),
   ];
-  ["cmpA","cmpB"].forEach((id,di)=>{
-    const sel=document.getElementById(id);
-    all.forEach((p,i)=>{const o=document.createElement("option");o.value=p.val;o.textContent=p.label;if(i===di)o.selected=true;sel.appendChild(o);});
+  ['cmpA','cmpB'].forEach((id, di) => {
+    const sel = document.getElementById(id);
+    all.forEach((p, i) => {
+      const o = document.createElement('option');
+      o.value = p.val; o.textContent = p.label;
+      if (i === di) o.selected = true;
+      sel.appendChild(o);
+    });
   });
   renderCompare();
 }
-function getPlayer(val){const[t,i]=val.split(":");return t==="p"?{...PROSPECTS[+i],isPros:true}:{...HISTORICAL[+i],isPros:false};}
-function renderCompare(){
-  const ra=getPlayer(document.getElementById("cmpA").value);
-  const rb=getPlayer(document.getElementById("cmpB").value);
-  const a={...ra,score:ra.isPros?adjProspectPPR(ra):playerAvg(ra,currentFormat)};
-  const b={...rb,score:rb.isPros?adjProspectPPR(rb):playerAvg(rb,currentFormat)};
-  const fmt=FORMATS[currentFormat].label;
-  const crossPos=a.pos!==b.pos;
-  const attrs=[
-    {l:`${fmt} score`,ka:"score",kb:"score",hb:true},
-    {l:"Proj. pick",ka:"projPick",kb:"pick",hb:false},
-    {l:"Age / Draft age",ka:"age",kb:"breakout",hb:false},
-    {l:"Breakout age",ka:"breakout",kb:"breakout",hb:false},
-    {l:"Dominator rating",ka:"dominator",kb:"dominator",hb:true},
-    {l:"Receptions/yr",ka:"rec",kb:"rec",hb:true},
-    {l:"Rec yards/yr",ka:"rec_yds",kb:"rec_yds",hb:true},
-    {l:"College TDs",ka:"collegeTds",kb:"collegeTds",hb:true},
-    {l:"Games missed",ka:"gamesMissed",kb:"gamesMissed",hb:false},
+function getPlayer(val) {
+  const [t, i] = val.split(':');
+  return t === 'p' ? { ...PROSPECTS[+i], isPros: true } : { ...HISTORICAL[+i], isPros: false };
+}
+function renderCompare() {
+  const l = lens.cmp, m = mode.cmp;
+  const pa = getPlayer(document.getElementById('cmpA').value);
+  const pb = getPlayer(document.getElementById('cmpB').value);
+  const sa = pa.isPros ? (getScore(pa, l, m) || '—') : pa.actual;
+  const sb = pb.isPros ? (getScore(pb, l, m) || '—') : pb.actual;
+  const crossPos = pa.pos !== pb.pos;
+  const attrs = [
+    { l: `Score (${LENS_LABELS[l]})`, a: sa, b: sb, higher: true },
+    { l: 'Draft pick', a: pa.isPros ? pa.pick : pa.pick, b: pb.isPros ? pb.pick : pb.pick, higher: false },
+    { l: 'Breakout age', a: pa.breakout, b: pb.breakout, higher: false },
+    { l: 'College TDs', a: pa.isPros ? pa.college?.tds : '—', b: pb.isPros ? pb.college?.tds : '—', higher: true },
+    { l: 'College yards', a: pa.isPros ? pa.college?.yds : '—', b: pb.isPros ? pb.college?.yds : '—', higher: true },
+    { l: 'VORP', a: pa.isPros ? getVORP(pa, l) : '—', b: pb.isPros ? getVORP(pb, l) : '—', higher: true },
   ];
-  let html="";
-  if(crossPos)html+=`<div style="background:#FFF3CD;color:#856404;font-size:11px;padding:7px 10px;border-radius:8px;margin-bottom:.75rem">Cross-position comparison - scores are not directly comparable between positions.</div>`;
-  html+=`<div class="compare-grid">`;
-  [a,b].forEach((p,idx)=>{
-    const other=idx===0?b:a;
-    const injNote=injuryOn()&&p.injuryRisk&&p.inj_adj_avg?`<span style="font-size:10px;color:#1A6634"> (inj.adj.)</span>`:"";
-    html+=`<div class="ccard"><div class="cname">${p.name}</div>
-      <div class="cpos">${posBadge(p.pos)} ${compBadge(p.seasons||0)}${p.injuryRisk?`<span class="inj-badge">${p.gamesMissed}G</span>`:""}</div>`;
-    attrs.forEach(at=>{
-      const mk=idx===0?at.ka:at.kb,tk=idx===0?at.kb:at.ka;
-      const mv=p[mk]??p[at.ka],tv=other[tk]??other[at.kb];
-      const win=!crossPos&&mv!=null&&tv!=null&&(at.hb?+mv>+tv:+mv<+tv);
-      const disp=at.ka==="score"?(mv+(idx===0?injNote:"")):(mv===true?"Yes":mv===false?"No":(mv??"-"));
-      html+=`<div class="cstat"><span class="cstat-label">${at.l}</span><span class="${win?"win":""}">${disp}</span></div>`;
+  let html = '';
+  if (crossPos) html += `<div style="background:var(--warn2);color:var(--warn);font-size:11px;padding:8px 12px;border-radius:8px;margin-bottom:12px">Cross-position comparison — scores are not directly comparable between positions.</div>`;
+  html += `<div class="compare-grid">`;
+  [pa, pb].forEach((p, idx) => {
+    const other = idx === 0 ? pb : pa;
+    html += `<div class="ccard">
+      <div class="ccard-name">${p.name}</div>
+      <div class="ccard-meta">${posBadge(p.pos)}<span style="font-size:11px;color:var(--text2)">${p.isPros ? '2026 Prospect' : 'Historical · ' + p.year}</span></div>`;
+    attrs.forEach(attr => {
+      const av = idx === 0 ? attr.a : attr.b;
+      const bv = idx === 0 ? attr.b : attr.a;
+      const win = attr.higher && av != null && bv != null && av !== '—' && bv !== '—' && av > bv;
+      html += `<div class="cstat"><span class="cstat-label">${attr.l}</span><span class="${win ? 'cstat-win' : ''}">${av ?? '—'}</span></div>`;
     });
-    html+=`</div>`;
+    html += `</div>`;
   });
-  html+=`</div>`;document.getElementById("compare-output").innerHTML=html;
+  html += `</div>`;
+  document.getElementById('compare-out').innerHTML = html;
 }
 
-let dialPos="QB";
-function showDialPos(pos,btn){
-  dialPos=pos;
-  document.querySelectorAll("#tab-weights .pos-tab").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");renderDialRankings();
-}
-function renderDialRankings(){
-  const prospects=PROSPECTS.filter(p=>p.pos===dialPos);
-  const scored=prospects.map(p=>({...p,adj:adjProspectPPR(p),base:prospectScore(p,currentFormat)})).sort((a,b)=>b.adj-a.adj);
-  const baseRanked=[...prospects].sort((a,b)=>prospectScore(b,currentFormat)-prospectScore(a,currentFormat));
-  const body=document.getElementById("dial-rank-body");body.innerHTML="";
-  scored.forEach((p,i)=>{
-    const br=baseRanked.findIndex(d=>d.name===p.name)+1;
-    const diff=br-(i+1);
-    const ds=diff===0?"—":diff>0?`<span style="color:#1A6634">+${diff}</span>`:`<span style="color:#C02020">${diff}</span>`;
-    body.innerHTML+=`<tr><td>${i+1}</td><td style="font-weight:500">${p.name}</td>
-      <td style="color:#888">${p.school}</td><td>${p.projPick||"—"}</td>
-      <td style="color:#aaa">${p.base}</td><td style="font-weight:500">${p.adj}</td><td>${ds}</td></tr>`;
-  });
-}
-
-let weightsPos="QB";
-function showWeightsPos(pos,btn){
-  weightsPos=pos;
-  document.querySelectorAll("#tab-modelweights .pos-tab").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");renderWeights();
-}
-function renderWeights(){
-  const weights=MODEL_WEIGHTS[weightsPos]||[];
-  const POS_COLORS={QB:"#1A3A8F",RB:"#1A6634",WR:"#8B4500",TE:"#5B0085"};
-  const R2S={QB:"0.043",RB:"0.234",WR:"0.091",TE:"0.128"};
-  let html=`<div style="font-size:12px;color:#888;margin-bottom:.75rem">Cross-validated R2: <b>${R2S[weightsPos]}</b> &nbsp;·&nbsp; ${weights.length} features</div>`;
-  html+=`<table><thead><tr><th>Rank</th><th>Attribute</th><th>Importance %</th><th>Direction</th><th>Bar</th></tr></thead><tbody>`;
-  weights.forEach((w,i)=>{
-    const barColor=w.dir==="Positive"?"#1A6634":"#C02020";
-    const dirIcon=w.dir==="Positive"?"<span style='color:#1A6634'>+</span>":"<span style='color:#C02020'>-</span>";
-    html+=`<tr>
-      <td style="color:#aaa">${i+1}</td>
-      <td style="font-weight:500">${w.label}</td>
-      <td>${w.pct.toFixed(1)}%</td>
-      <td>${dirIcon} ${w.dir}</td>
-      <td><div style="background:#f0f0f0;border-radius:3px;height:8px;width:120px;overflow:hidden">
-        <div style="background:${barColor};height:100%;width:${Math.min(w.pct/55*100,100).toFixed(0)}%;border-radius:3px"></div>
-      </div></td>
-    </tr>`;
-  });
-  html+=`</tbody></table>`;
-  document.getElementById("weights-output").innerHTML=html;
-}
-
-function renderSearch(){
-  const name=document.getElementById("search-name").value.toLowerCase();
-  const pos=document.getElementById("search-pos").value;
-  const type=document.getElementById("search-type").value;
-  const injFilter=document.getElementById("search-injury").value;
-  let data=[
-    ...PROSPECTS.map(p=>({...p,ppr:prospectScore(p,currentFormat),status:"2026 prospect",injuryRisk:false})),
-    ...HISTORICAL.map(p=>({...p,ppr:playerAvg(p,currentFormat),status:p.isRookie?"2025 rookie":"Historical ("+p.year+")"})),
-  ];
-  if(name)data=data.filter(p=>p.name.toLowerCase().includes(name));
-  if(pos)data=data.filter(p=>p.pos===pos);
-  if(type==="prospect")data=data.filter(p=>p.status==="2026 prospect");
-  if(type==="2025")data=data.filter(p=>p.status==="2025 rookie");
-  if(type==="historical")data=data.filter(p=>p.status.startsWith("Historical"));
-  if(injFilter==="inj")data=data.filter(p=>p.injuryRisk);
-  if(injFilter==="clean")data=data.filter(p=>!p.injuryRisk);
-  data.sort((a,b)=>b.ppr-a.ppr);
-  document.getElementById("search-count").textContent=`${data.length} player${data.length!==1?"s":""} found`;
-  const body=document.getElementById("search-body");body.innerHTML="";
-  data.slice(0,60).forEach(p=>{
-    const t=getTier(p.ppr||80);
-    const injTag=p.injuryRisk?`<span class="inj-badge">${p.gamesMissed}G</span>`:`<span style="color:#aaa;font-size:11px">-</span>`;
-    body.innerHTML+=`<tr><td style="font-weight:500">${p.name}</td><td>${posBadge(p.pos)}</td>
-      <td style="color:#888;font-size:11px">${p.status}</td><td>${p.projPick||p.pick||"-"}</td>
-      <td>${p.breakout||"-"}</td><td style="font-weight:500">${p.ppr||"-"}</td>
-      <td>${injTag}</td><td>${compBadge(p.seasons||0)}</td></tr>`;
-  });
-}
-
-
-// Dashboard section toggle
-function showDashSection(id, btn) {
-  document.querySelectorAll('.dash-section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.dash-tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('dash-'+id).classList.add('active');
-  btn.classList.add('active');
-}
-
-// Dashboard prospect filter
-let dashPosFilter = 'ALL';
-function filterDashProspects(pos, btn) {
-  dashPosFilter = pos;
-  document.querySelectorAll('#dash-pos-tabs .pos-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderDashProspects();
-}
-
-function renderDashProspects() {
-  const data = (dashPosFilter==='ALL' ? PROSPECTS : PROSPECTS.filter(p=>p.pos===dashPosFilter))
-    .map(p=>({...p, score:adjProspectPPR(p)}))
-    .sort((a,b)=>b.score-a.score);
-  const body = document.getElementById('dash-prospect-body');
-  body.innerHTML = '';
-  data.forEach((p,i)=>{
-    const tier = getTier(p.score);
-    body.innerHTML += `<tr>
-      <td style="color:#aaa">${i+1}</td>
-      <td style="font-weight:500">${p.name}</td>
-      <td style="color:#888">${p.school}</td>
+// ── Search ────────────────────────────────────────────────────────────────────
+function renderSearch() {
+  const q = (document.getElementById('s-name').value || '').toLowerCase();
+  const pos = document.getElementById('s-pos').value;
+  const type = document.getElementById('s-type').value;
+  let players = [];
+  if (!type || type === 'prospect') {
+    PROSPECTS.forEach(p => {
+      if (pos && p.pos !== pos) return;
+      if (q && !p.name.toLowerCase().includes(q)) return;
+      const s = getScore(p, 'peak', 'combined');
+      const v = getVORP(p, 'peak');
+      const tier = getTier(p, 'peak', 'combined');
+      players.push({ name: p.name, pos: p.pos, status: '2026', pick: p.pick, breakout: p.breakout, score: s, vorp: v, tier, isPros: true });
+    });
+  }
+  if (!type || type === 'historical') {
+    HISTORICAL.forEach(p => {
+      if (pos && p.pos !== pos) return;
+      if (q && !p.name.toLowerCase().includes(q)) return;
+      players.push({ name: p.name, pos: p.pos, status: p.year, pick: p.pick, breakout: p.breakout, score: p.actual, vorp: null, tier: '', isPros: false, seasons: p.seasons });
+    });
+  }
+  players.sort((a, b) => (b.score || 0) - (a.score || 0));
+  document.getElementById('s-count').textContent = `${players.length} players`;
+  const tbody = document.getElementById('s-tbody');
+  tbody.innerHTML = '';
+  players.forEach(p => {
+    const tierHtml = p.tier ? `<span class="badge ${tierClass(p.tier)}">${p.tier}</span>` : '';
+    const dotsHtml = p.isPros ? '' : dots(p.seasons || 0);
+    tbody.innerHTML += `<tr>
+      <td style="font-weight:600">${p.name}</td>
       <td>${posBadge(p.pos)}</td>
-      <td>${p.projPick||'—'}</td>
-      <td>${p.age}</td>
-      <td>${p.breakout||'—'}</td>
-      <td style="font-weight:500">${p.score}</td>
-      <td><span class="badge ${tier.cls}">${tier.label}</span></td>
-      <td><button class="comp-btn" onclick="showComp('${p.name.replace(/'/g,"\'")}')">Comp</button></td>
+      <td style="color:var(--text2);font-size:11px">${p.status}</td>
+      <td class="num">${p.pick || '—'}</td>
+      <td class="num">${p.breakout || '—'}</td>
+      <td class="num" style="font-weight:600">${p.score || '—'}</td>
+      <td>${p.vorp != null ? vorpHtml(p.vorp) : dotsHtml}</td>
+      <td>${tierHtml}</td>
     </tr>`;
   });
-  // Update score col header
-  document.getElementById('dash-score-col').textContent = FORMATS[currentFormat].label + ' Predicted';
 }
 
-// Historical comp finder
-function showComp(prospectName) {
-  const prospect = PROSPECTS.find(p=>p.name===prospectName);
-  if(!prospect) return;
+// ── Comp Modal ────────────────────────────────────────────────────────────────
+function showComp(name) {
+  const p = PROSPECTS.find(x => x.name === name);
+  if (!p) return;
+  const l = lens.dash, m = mode.dash;
+  const ps = getScore(p, l, m);
+  const pv = getVORP(p, l);
+  const tier = getTier(p, l, m);
 
-  const posHistory = HISTORICAL.filter(p=>p.pos===prospect.pos && p.actual_half);
+  // Find comps by draft pick proximity (same position, similar draft slot)
+  // This avoids the scale mismatch between old Ridge pick_pred and new XGBoost scores
+  function getComps(win) {
+    return HISTORICAL.filter(h => h.pos === p.pos && h.actual > 0 &&
+      p.pick != null && Math.abs((h.pick || 100) - p.pick) <= win);
+  }
+  let comps = getComps(20), winUsed = 20;
+  if (comps.length < 3) { comps = getComps(40); winUsed = 40; }
+  if (comps.length < 3) { comps = HISTORICAL.filter(h => h.pos === p.pos && h.actual > 0); winUsed = 999; }
+  const sorted = [...comps].sort((a, b) => b.actual - a.actual);
+  const n = sorted.length;
+  const up = sorted[0], mid = sorted[Math.floor(n/2)], dn = sorted[Math.min(Math.floor(n*0.8), n-1)];
 
-  // Score similarity on pre-draft profile, NOT draft capital
-  // The goal is to find players who looked similar coming out of college
-  function simScore(hist) {
-    let diff = 0;
-    let factors = 0;
-
-    // Breakout age (most important pre-draft signal)
-    if(prospect.breakout && hist.breakout) {
-      diff += Math.abs(prospect.breakout - hist.breakout) / 2 * 3;
-      factors += 3;
-    }
-
-    // Draft age
-    if(prospect.age) {
-      const histAge = hist.forty ? hist.breakout + 2.5 : 22;
-      diff += Math.abs(prospect.age - histAge) / 2 * 2;
-      factors += 2;
-    }
-
-    // Dominator rating vs historical college share
-    // Use receptions/yr as proxy for college role
-    if(prospect.pos !== 'QB') {
-      const pRec = prospect.collegeRec || 0;
-      const hRec = hist.rec || 0;
-      const recDiff = Math.abs(pRec - hRec) / 50;
-      diff += recDiff * 2;
-      factors += 2;
-
-      const pYds = prospect.collegeYds || 0;
-      const hYds = (hist.rec_yds || 0);
-      diff += Math.abs(pYds - hYds) / 500 * 2;
-      factors += 2;
-    }
-
-    // For QBs compare college TDs
-    if(prospect.pos === 'QB') {
-      const pTds = prospect.collegeTds || 0;
-      const hTds = hist.pass_td || 0;
-      diff += Math.abs(pTds - hTds) / 15 * 2;
-      factors += 2;
-    }
-
-    // Draft pick as a minor factor (not dominant)
-    const pickDiff = Math.abs((prospect.projPick||50) - (hist.pick||100)) / 100;
-    diff += pickDiff * 1;
-    factors += 1;
-
-    return factors > 0 ? diff / factors : diff;
+  function oc(player, label, cls) {
+    if (!player) return `<div class="oc ${cls}"><div class="oc-label">${label}</div><div style="font-size:11px;color:var(--text2)">No comps found</div></div>`;
+    return `<div class="oc ${cls}">
+      <div class="oc-label">${label}</div>
+      <div class="oc-name">${player.name}</div>
+      <div class="oc-meta">${player.year} · Pick ${player.pick} · Breakout ${player.breakout || '—'}</div>
+      <div class="oc-score">${player.actual} <span style="font-size:11px;font-weight:400">pts/ssn</span></div>
+      <div class="oc-row"><span>Model predicted</span><span>${player.pick_pred || '—'}</span></div>
+      <div class="oc-row"><span>Draft pick</span><span>${player.pick}</span></div>
+      <div class="oc-row"><span>Seasons</span><span>${player.seasons}</span></div>
+    </div>`;
   }
 
-  const sorted = posHistory
-    .map(h=>({...h, sim:simScore(h)}))
-    .sort((a,b)=>a.sim-b.sim)
-    .slice(0,3);
+  // SHAP approximation from model weights
+  const weights = MODEL_WEIGHTS[p.pos];
+  const shap_vals = weights.map(w => {
+    let raw = 0;
+    if (w.l.includes('pick')) raw = (262 - (p.pick || 130)) / 262;
+    else if (w.l.includes('Breakout') || w.l.includes('breakout')) raw = p.breakout ? (22 - p.breakout) / 4 : 0;
+    else if (w.l.includes('age') || w.l.includes('Age')) raw = p.age ? (25 - p.age) / 5 : 0;
+    else if (w.l.includes('yard') || w.l.includes('Yard') || w.l.includes('rec')) raw = p.college ? p.college.yds / 1500 : 0;
+    else if (w.l.includes('TD') || w.l.includes('td')) raw = p.college ? p.college.tds / 20 : 0;
+    else raw = 0.5;
+    const contribution = raw * w.pct * w.dir * (ps || 100) / 2000;
+    return { l: w.l, v: Math.round(contribution * 10) / 10, dir: w.dir };
+  }).sort((a, b) => Math.abs(b.v) - Math.abs(a.v)).slice(0, 6);
+  const maxShap = Math.max(...shap_vals.map(s => Math.abs(s.v)));
 
-  const fmt = FORMATS[currentFormat].label;
-  const pScore = adjProspectPPR(prospect);
-  const tier = getTier(pScore);
+  const shapHtml = shap_vals.map(s => {
+    const pct = maxShap > 0 ? Math.round(Math.abs(s.v) / maxShap * 100) : 0;
+    const pos_neg = s.v >= 0 ? 'pos' : 'neg';
+    const col = s.v >= 0 ? 'var(--accent)' : 'var(--danger)';
+    return `<div class="shap-row">
+      <span class="shap-label">${s.l}</span>
+      <div class="shap-bar-wrap"><div class="shap-bar ${pos_neg}" style="width:${pct}%"></div></div>
+      <span class="shap-val" style="color:${col}">${s.v > 0 ? '+' : ''}${s.v}</span>
+    </div>`;
+  }).join('');
 
-  let html = `
+  const lensNote = l === 'career' && p.pos === 'QB' ? '<div style="font-size:10.5px;color:var(--warn);background:var(--warn2);padding:6px 10px;border-radius:7px;margin-bottom:10px">QB career total model had insufficient training data (n=29) — use with caution.</div>' : '';
+
+  document.getElementById('comp-modal-body').innerHTML = `
     <div class="prospect-hero">
-      <div class="prospect-hero-name">${prospect.name} ${posBadge(prospect.pos)}</div>
-      <div class="prospect-hero-meta">${prospect.school} · Pick ${prospect.projPick||'TBD'} · Age ${prospect.age} · Breakout ${prospect.breakout||'—'}</div>
-      <div class="prospect-hero-stats">
-        <div class="phstat"><div class="phstat-label">Predicted ${fmt}</div><div class="phstat-val">${pScore}</div></div>
-        <div class="phstat"><div class="phstat-label">Tier</div><div class="phstat-val">${tier.label}</div></div>
-        <div class="phstat"><div class="phstat-label">Dominator</div><div class="phstat-val">${prospect.dominator||'—'}</div></div>
-        <div class="phstat"><div class="phstat-label">College TDs</div><div class="phstat-val">${prospect.collegeTds||'—'}</div></div>
+      <div class="hero-name">${p.name} ${posBadge(p.pos)}</div>
+      <div class="hero-meta">${p.school} · Pick ${p.pick || 'TBD'} · Age ${p.age} · Breakout ${p.breakout || '—'}</div>
+      <div class="hero-stats">
+        <div class="hs"><div class="hs-label">Score (${LENS_LABELS[l]})</div><div class="hs-val">${ps ?? '—'}</div></div>
+        <div class="hs"><div class="hs-label">VORP</div><div class="hs-val">${pv != null ? (pv > 0 ? '+' : '') + pv : '—'}</div></div>
+        <div class="hs"><div class="hs-label">Tier</div><div class="hs-val" style="font-size:12px">${tier}</div></div>
+        <div class="hs"><div class="hs-label">College Yds</div><div class="hs-val">${p.college?.yds || '—'}</div></div>
+        <div class="hs"><div class="hs-label">College TDs</div><div class="hs-val">${p.college?.tds || '—'}</div></div>
       </div>
     </div>
-    <div class="modal-title">Closest historical comps at ${prospect.pos}</div>
-    <div class="modal-sub">Players with the most similar pre-draft profile · showing their actual career outcome</div>
-    <div class="comp-grid">`;
-
-  sorted.forEach(h => {
-    const actual = playerAvg(h, currentFormat);
-    const hTier = getTier(actual);
-    html += `
-      <div class="comp-card">
-        <div class="comp-card-name">${h.name}</div>
-        <div class="comp-card-meta">${h.year} · Pick ${h.pick||'UDFA'} · Breakout ${h.breakout||'—'}</div>
-        <div class="comp-card-stat"><span>Draft pick</span><span>${h.pick||'UDFA'}</span></div>
-        <div class="comp-card-stat"><span>Breakout age</span><span>${h.breakout||'—'}</span></div>
-        <div class="comp-card-stat"><span>40-yard dash</span><span>${h.forty||'—'}</span></div>
-        <div class="comp-card-stat"><span>Seasons played</span><span>${h.seasons}</span></div>
-        <div class="comp-card-actual">
-          <span style="font-size:11px;color:#888">Actual avg ${fmt}/season: </span>
-          <span style="color:#1A6634">${actual}</span>
-          <span class="badge ${hTier.cls}" style="margin-left:6px">${hTier.label}</span>
-        </div>
-      </div>`;
-  });
-
-  html += `</div>
-    <div style="font-size:11px;color:#aaa">Similarity based on draft pick, breakout age, and draft age. Not a guarantee of comparable outcomes.</div>`;
-
-  document.getElementById('comp-modal-content').innerHTML = html;
+    ${lensNote}
+    ${n > 0 ? `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:6px 10px;background:var(--surface2);border-radius:7px">
+      ${n} historical ${p.pos}s with similar draft slot (pick ±${winUsed === 999 ? 'all positions' : winUsed}) · Sorted by actual outcome
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">Historical outcome range</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">What happened to similar prospects — upside, likely, and downside scenarios</div>
+    <div class="outcome-grid">
+      ${oc(up, 'Upside', 'up')}
+      ${oc(mid, 'Likely', 'mid')}
+      ${oc(dn, 'Downside', 'dn')}
+    </div>` : `<div style="font-size:11px;color:var(--text2);padding:10px;background:var(--surface2);border-radius:8px">No historical comps found at this position.</div>`}
+    <div class="shap-section">
+      <div class="shap-title">Feature contributions (approximate)</div>
+      ${shapHtml}
+      <div class="shap-note">Based on XGBoost feature importance weights. Green = positive contribution to score, red = negative.</div>
+    </div>
+  `;
   document.getElementById('comp-modal').classList.add('open');
 }
+function closeModal() { document.getElementById('comp-modal').classList.remove('open'); }
+document.getElementById('comp-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
-function closeCompModal() {
-  document.getElementById('comp-modal').classList.remove('open');
+// ── Preferences ────────────────────────────────────────────────────────────────
+function initDials() {
+  const grid = document.getElementById('dials-grid');
+  grid.innerHTML = '';
+  DIAL_DEFS.forEach(({ k, label, desc }) => {
+    grid.innerHTML += `<div class="dial-card">
+      <div class="dial-title">${label}</div>
+      <div class="dial-desc">${desc}</div>
+      <div class="dial-row">
+        <input type="range" min="1" max="10" step="1" value="5" id="dial-${k}" oninput="updateDial('${k}',this.value)">
+        <span class="dial-val" id="dv-${k}">5</span>
+      </div>
+      <div class="dial-bar"><div class="dial-fill" id="df-${k}" style="width:44%;background:#1E40AF"></div></div>
+      <div class="dial-labels"><span>Ignore</span><span>Default</span><span>Amplify</span></div>
+    </div>`;
+  });
 }
-document.getElementById('comp-modal').addEventListener('click', function(e) {
-  if(e.target === this) closeCompModal();
-});
+function updateDial(k, v) {
+  v = parseInt(v); DIALS[k] = v;
+  document.getElementById(`dv-${k}`).textContent = v;
+  document.getElementById(`dv-${k}`).style.color = dialColor(v);
+  const f = document.getElementById(`df-${k}`);
+  f.style.width = ((v - 1) / 9 * 100).toFixed(0) + '%';
+  f.style.background = dialColor(v);
+  renderPros(); renderDialRankings(); updatePrefBar();
+}
+function resetDials() {
+  for (const k of Object.keys(DIALS)) {
+    DIALS[k] = 5;
+    document.getElementById(`dial-${k}`).value = 5;
+    updateDial(k, 5);
+  }
+}
 
-initCharts();renderPositionPerformers();renderProspects();initCompare();renderDialRankings();renderSearch();updatePrefSummary();renderWeights();
-renderDashProspects();
+function showDialPos(pos, btn) {
+  dialPos = pos;
+  document.querySelectorAll('#tab-prefs .pos-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDialRankings();
+}
+function renderDialRankings() {
+  const l = lens.pros, m = mode.pros;
+  const posData = PROSPECTS.filter(p => p.pos === dialPos)
+    .map(p => ({ ...p, base: getScore(p, l, m), adj: adjScore(p, l, m) }))
+    .filter(p => p.base != null)
+    .sort((a, b) => b.adj - a.adj);
+  const baseRanks = {};
+  [...posData].sort((a, b) => b.base - a.base).forEach((p, i) => { baseRanks[p.name] = i + 1; });
+  const tbody = document.getElementById('dial-tbody');
+  tbody.innerHTML = '';
+  posData.forEach((p, i) => {
+    const br = baseRanks[p.name], ar = i + 1, diff = br - ar;
+    const chg = diff === 0 ? '—'
+      : diff > 0 ? `<span style="color:var(--accent)">▲${diff}</span>`
+      : `<span style="color:var(--danger)">▼${Math.abs(diff)}</span>`;
+    tbody.innerHTML += `<tr>
+      <td class="rank-num">${ar}</td>
+      <td style="font-weight:600">${p.name}</td>
+      <td style="color:var(--text2)">${p.school}</td>
+      <td class="num">${p.pick}</td>
+      <td class="num" style="color:var(--text3)">${p.base}</td>
+      <td class="num" style="font-weight:600">${p.adj}</td>
+      <td>${chg}</td>
+    </tr>`;
+  });
+}
+
+// ── Model Weights ──────────────────────────────────────────────────────────────
+function showWeightsPos(pos, btn) {
+  weightsPos = pos;
+  document.querySelectorAll('#tab-weights .pos-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderWeights();
+}
+function renderWeights() {
+  const w = MODEL_WEIGHTS[weightsPos];
+  const max = Math.max(...w.map(x => x.pct));
+  let html = `<div class="card-title">${weightsPos} — Feature importance (XGBoost SHAP)</div>`;
+  w.forEach(f => {
+    const bw = Math.round(f.pct / max * 100);
+    const col = f.dir === 1 ? 'var(--accent)' : 'var(--danger)';
+    const dir = f.dir === 1 ? 'Positive' : 'Negative';
+    html += `<div class="weight-row">
+      <div class="weight-meta">
+        <span style="font-size:12px">${f.l}</span>
+        <span style="font-size:11px;color:${col};font-weight:600">${dir} · ${f.pct}</span>
+      </div>
+      <div class="weight-bar-wrap">
+        <div class="weight-bar" style="width:${bw}%;height:100%;background:${col};border-radius:3px"></div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('weights-card').innerHTML = html;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderDash(); renderPros(); renderSearch(); renderCompare(); renderDialRankings();
+}
+
+initDials();
+renderDash();
+renderPros();
+initCompare();
+renderDialRankings();
+renderSearch();
+updatePrefBar();
+renderWeights();
+lensInfo('peak', 'dash');
+lensInfo('peak', 'pros');
+syncLensDisplay();
 </script>
